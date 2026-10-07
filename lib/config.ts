@@ -1,3 +1,4 @@
+import path from "node:path";
 import { z } from "zod";
 
 /** Published Anthropic list prices, USD per million tokens. Used to turn real token counts from
@@ -93,4 +94,9 @@ export function describeSources(subject: Subject): string {
   return sources.length === 1
     ? sources[0]!
     : `${sources.slice(0, -1).join(", ")} and ${sources.at(-1)!}`;
+}
+
+/** The resume file to ingest. Defaults to the worked example's format-contract Markdown CV. */
+export function getResumePath(): string {
+  return path.resolve(process.env["RESUME_PATH"]?.trim() || path.join("knowledge", "sources", "cv.md"));
 }

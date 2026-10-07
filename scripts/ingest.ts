@@ -13,10 +13,10 @@ import { writeFile, readFile } from "node:fs/promises";
 import path from "node:path";
 import { KnowledgeUnitSchema, type KnowledgeUnit } from "../lib/models";
 import type { SourceAdapter } from "../lib/sources/types";
-import { cvAdapter } from "../lib/sources/cv";
+import { createResumeAdapter } from "../lib/sources/resume";
 import { createLinkedinAdapter } from "../lib/sources/linkedin";
 import { createGithubAdapter } from "../lib/sources/github";
-import { getSubject } from "../lib/config";
+import { getResumePath, getSubject } from "../lib/config";
 import { buildKnowledgeBase } from "../lib/knowledge";
 import { closeDb, getDb, isDatabaseConfigured } from "../lib/db/client";
 import { replaceKnowledge } from "../lib/db/knowledge-store";
@@ -24,11 +24,11 @@ import { replaceKnowledge } from "../lib/db/knowledge-store";
 const OUTPUT = path.join(process.cwd(), "data", "knowledge-units.json");
 const CONFLICTS = path.join(process.cwd(), "data", "conflicts.json");
 
-/** The CV is always a source; LinkedIn and GitHub only when their env vars are set. */
+/** The resume is always a source; LinkedIn and GitHub only when their env vars are set. */
 function configuredAdapters(): SourceAdapter[] {
   const { linkedinProfile, githubUsername } = getSubject();
   return [
-    cvAdapter,
+    createResumeAdapter(getResumePath()),
     ...(linkedinProfile ? [createLinkedinAdapter(linkedinProfile)] : []),
     ...(githubUsername ? [createGithubAdapter(githubUsername)] : []),
   ];

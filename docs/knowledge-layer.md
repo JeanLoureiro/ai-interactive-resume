@@ -103,7 +103,8 @@ Who the knowledge base is about comes from env, read by `getSubject()` in `lib/c
 | `LINKEDIN_PROFILE` | Full profile URL. Blank means the LinkedIn adapter is not built and the text stops mentioning LinkedIn. |
 | `GITHUB_USERNAME` | Blank means the same for GitHub. |
 
-The CV is always a source, read from `knowledge/sources/cv.md`.
+The resume is always a source, read from `RESUME_PATH` (default `knowledge/sources/cv.md`). See
+"Resumes as PDF, DOCX or free-form Markdown" below.
 
 Fixed text never uses a pronoun for the subject. A template gets forked by people it has never
 met, so it refers to them by name instead of guessing.
@@ -112,6 +113,41 @@ met, so it refers to them by name instead of guessing.
 `github:public-footprint-scope` unit. It exists because some statements about a public profile are
 judgements only its owner can make ("these are tutorial repos", "the real projects are private"),
 and those belong in data the owner writes, not in adapter code.
+
+## Resumes as PDF, DOCX or free-form Markdown
+
+A Markdown file in the format contract (see the top of `knowledge/sources/cv.md`) is parsed by
+`lib/sources/cv.ts` with no model involved. Anything else goes through `lib/resume/`:
+
+1. **Extract** the text: `unpdf` for PDF, `mammoth` for DOCX. Deterministic.
+2. **Scrub** emails and phone numbers from that text, before anything else sees it.
+3. **Structure** it with one model call: sections, entries, lines. The model is told to copy, keep
+   the resume's own wording and person ("I built…"), and change nothing except words broken by
+   extraction.
+4. **Guard** every line and heading against the scrubbed text (`lib/resume/guard.ts`). What fails
+   is dropped and reported, never stored.
+5. **Map** entries to units with the same function the format-contract parser uses, so ids, dates
+   and unit types are decided in one place.
+
+The guard exists because the extracted text is not clean. Designed PDF fonts often break
+ligatures: one real resume extracted "production software" as `producHon soIware`, "patterns" as
+`pa]erns`, "splitting" with `tti` collapsed into one character. So the check cannot be exact
+matching, and a plain similarity score is not enough either: on that resume, "15+ years" changed
+to "20+" and "feedback" swapped for "payroll" scored the same as genuine damaged lines.
+
+The rule that works, measured before it was written:
+
+- **Every word must exist in the resume.** Numbers exactly. Other words exactly, as their singular
+  or plural, or with one ligature (`ti`, `tti`, `ft`, `tt`, `tf`, `fi`, `fl`, `ff`, `ffi`, `ffl`)
+  collapsed into a single character. This is what catches a changed number or one swapped word.
+- **Content lines must also read like some passage of the resume** (normalised edit distance of at
+  least 0.8 against a window of the same length), so real words shuffled into a new claim fail.
+  Headings are exempt from this part, because the model composes them from words that are not
+  adjacent, such as `Skills — Languages`.
+
+**Known blind spot:** real words recombined into a false claim that still reads like a passage of
+the resume can pass. That is the same class as the answer guard's blind spot, and the answer is
+the same: `pnpm resume:preview` shows every unit before anything is stored.
 
 ## The conflicts, gaps and stale facts
 

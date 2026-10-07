@@ -278,3 +278,34 @@ of the bug. The miss is real and is the next thing to fix.
 
 Answer correctness has not been hand-graded for this run yet. `eval/manual-verdicts.json` still
 grades the `1cdb373` Sonnet transcripts.
+
+## Resume ingestion, measured on a real PDF
+
+Run once on the author's own resume PDF (3 pages, kept out of the repository), with the pipeline in
+`lib/resume/`, Sonnet 5, on 2026-10-07. The hand-transcribed `knowledge/sources/cv.md` is the
+comparison: it holds 23 units, but it is a light rewrite rather than a copy (third person, plus
+transcriber notes), so it measures coverage, not exact text.
+
+| | First run | After the fixes below |
+| --- | ---: | ---: |
+| Units kept | 6 | **23** |
+| Fragments dropped by the guard | 12 | **0** |
+| Words in kept units still showing extraction damage | not measured | **0** |
+| Contact details removed before the model | 1 email, 1 phone | same |
+| Tokens (in / out) | 4,514 / 6,954 | 4,538 / 8,265 |
+| Cost | $0.08 | $0.09 |
+| Wall time | 112 s | similar |
+
+What the first run got wrong was the guard, not the model. Ten of the twelve drops were entry
+headings: the model composes `Skills — Languages` from words that are not adjacent in the resume,
+so the similar-passage rule rejected them, and an entry without a verified heading is dropped
+whole. Headings now need only the every-word rule. The other fixes were the `tti` ligature
+("splitting") and accepting a word's singular or plural ("Certificate" under "Certificates").
+Each fix has a test in `tests/resume-guard.test.ts`.
+
+Against invented content, `tests/resume-guard.test.ts` and `tests/resume-pipeline.test.ts` show
+the guard dropping an invented employer, a qualification, "15+" changed to "20+", a team of 6
+changed to 60, and one swapped word in an otherwise real sentence.
+
+Wall time matters for the upload page: two minutes is inside Vercel's 300-second default, but the
+page has to say that it is working.
