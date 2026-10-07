@@ -22,6 +22,10 @@ This is written so a reviewer can predict the system's behaviour without reading
 Ingestion runs offline and its output is committed, so the repo runs without network access and a
 reviewer can read exactly what the assistant knows. Query time is one deterministic pass.
 
+Who the assistant is about is configuration, not code: `getSubject()` in `lib/config.ts` reads
+`SUBJECT_NAME` and the optional profile variables, and the system prompt, fallbacks, adapters and
+page are all built from it. See "Pointing it at someone else" in `docs/knowledge-layer.md`.
+
 ## Why this architecture
 
 **A structured pipeline, not an agent.** The corpus is 43 short units with no hierarchy and no

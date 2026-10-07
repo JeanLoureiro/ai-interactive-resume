@@ -1,8 +1,25 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import type { KnowledgeUnit } from "../models";
 import type { SourceAdapter } from "./types";
 
-const USERNAME = "JeanLoureiro";
-const API_URL = `https://api.github.com/users/${USERNAME}/repos?per_page=100&sort=updated`;
+/**
+ * Optional owner statement about the public profile, appended verbatim to the footprint unit.
+ *
+ * Kept in a file rather than in code because it is a judgement only the profile's owner can make
+ * ("these are tutorial repos", "the real projects are private"). Absent means no statement is made.
+ */
+const NOTE_PATH = path.join(process.cwd(), "knowledge", "sources", "github-note.md");
+
+async function readOwnerNote(): Promise<string | undefined> {
+  try {
+    const note = (await readFile(NOTE_PATH, "utf8")).trim();
+    return note || undefined;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
+    throw error;
+  }
+}
 
 interface Repo {
   name: string;
@@ -14,13 +31,15 @@ interface Repo {
   stargazers_count: number;
 }
 
-export const githubAdapter: SourceAdapter = {
+/** `username` comes from GITHUB_USERNAME. Not configured means this adapter is never built. */
+export const createGithubAdapter = (username: string): SourceAdapter => ({
   name: "github",
-  description: `Public repositories for github.com/${USERNAME} via the unauthenticated REST API`,
+  description: `Public repositories for github.com/${username} via the unauthenticated REST API`,
 
   async load(): Promise<KnowledgeUnit[]> {
-    const response = await fetch(API_URL, {
-      headers: { accept: "application/vnd.github+json", "user-agent": "ask-about-jean" },
+    const apiUrl = `https://api.github.com/users/${encodeURIComponent(username)}/repos?per_page=100&sort=updated`;
+    const response = await fetch(apiUrl, {
+      headers: { accept: "application/vnd.github+json", "user-agent": "ai-interactive-resume" },
       signal: AbortSignal.timeout(20_000),
     });
     if (!response.ok) {
@@ -53,8 +72,8 @@ export const githubAdapter: SourceAdapter = {
     // Without this unit, "can I see your code?" retrieves a handful of decade-old tutorial repos and
     // nothing else, and an accurate-but-incomplete answer implies the CV projects are unevidenced.
     // The shape of the public profile is itself a citable fact. The counts and dates are computed
-    // from the API response so they cannot drift; the note about private repositories is Jean's own
-    // stated position, recorded as a statement rather than inferred.
+    // from the API response so they cannot drift; the owner's note, if any, is their own stated
+    // position, recorded as a statement rather than inferred.
     const years = repos
       .map((repo) => repo.updated_at.slice(0, 4))
       .sort((a, b) => a.localeCompare(b));
@@ -68,21 +87,19 @@ export const githubAdapter: SourceAdapter = {
       unitType: "profile",
       title: "Scope and age of the public GitHub profile",
       text: [
-        `The public GitHub profile for ${USERNAME} contains ${repos.length} public ${repos.length === 1 ? "repository" : "repositories"}${forks > 0 ? `, of which ${forks} ${forks === 1 ? "is a fork" : "are forks"}` : ""}.`,
+        `The public GitHub profile for ${username} contains ${repos.length} public ${repos.length === 1 ? "repository" : "repositories"}${forks > 0 ? `, of which ${forks} ${forks === 1 ? "is a fork" : "are forks"}` : ""}.`,
         oldest && newest
           ? `They were last updated between ${oldest} and ${newest}.`
           : undefined,
-        `Their own descriptions identify most of them as course and tutorial follow-alongs. None of them corresponds to the projects described on the CV, and none demonstrates the AI or agentic engineering work the CV leads with.`,
-        `The public profile is therefore a record of earlier learning work, not a representation of current capability.`,
-        `The CV projects — Marketing Triage, Pohly, Financial Sanity and The Clubhouse Poker — are in private repositories, as is client work. Jean's stated position is that these can be shared on request during a hiring conversation, so the absence of a public repository for a project is not evidence against that project.`,
+        await readOwnerNote(),
         `Retrieved ${retrievedAt}.`,
       ]
         .filter(Boolean)
         .join(" "),
-      link: `https://github.com/${USERNAME}`,
+      link: `https://github.com/${username}`,
       retrievedAt,
     });
 
     return units;
   },
-};
+});

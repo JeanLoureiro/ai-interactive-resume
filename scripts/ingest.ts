@@ -13,12 +13,21 @@ import path from "node:path";
 import { KnowledgeUnitSchema, type KnowledgeUnit } from "../lib/models";
 import type { SourceAdapter } from "../lib/sources/types";
 import { cvAdapter } from "../lib/sources/cv";
-import { linkedinAdapter } from "../lib/sources/linkedin";
-import { githubAdapter } from "../lib/sources/github";
+import { createLinkedinAdapter } from "../lib/sources/linkedin";
+import { createGithubAdapter } from "../lib/sources/github";
+import { getSubject } from "../lib/config";
 
 const OUTPUT = path.join(process.cwd(), "data", "knowledge-units.json");
 
-const adapters: SourceAdapter[] = [cvAdapter, linkedinAdapter, githubAdapter];
+/** The CV is always a source; LinkedIn and GitHub only when their env vars are set. */
+function configuredAdapters(): SourceAdapter[] {
+  const { linkedinProfile, githubUsername } = getSubject();
+  return [
+    cvAdapter,
+    ...(linkedinProfile ? [createLinkedinAdapter(linkedinProfile)] : []),
+    ...(githubUsername ? [createGithubAdapter(githubUsername)] : []),
+  ];
+}
 const NETWORK_ADAPTERS = new Set<string>(["linkedin", "github"]);
 
 async function readExisting(): Promise<KnowledgeUnit[]> {
@@ -34,7 +43,7 @@ async function main(): Promise<void> {
   const existing = await readExisting();
   const units: KnowledgeUnit[] = [];
 
-  for (const adapter of adapters) {
+  for (const adapter of configuredAdapters()) {
     if (offline && NETWORK_ADAPTERS.has(adapter.name)) {
       const kept = existing.filter((u) => u.source === adapter.name);
       console.log(`  ${adapter.name.padEnd(9)} skipped (offline), kept ${kept.length} existing units`);

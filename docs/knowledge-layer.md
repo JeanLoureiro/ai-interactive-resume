@@ -74,8 +74,8 @@ confidently from one side of a disagreement it never saw.
 
 ## Adding a fourth source
 
-One file implementing `SourceAdapter` (`lib/sources/types.ts`), plus one line in the adapter list in
-`scripts/ingest.ts`. Nothing downstream changes: indexing, retrieval, citation, the guard and the UI
+One file implementing `SourceAdapter` (`lib/sources/types.ts`), plus one line in
+`configuredAdapters()` in `scripts/ingest.ts`. Nothing downstream changes: indexing, retrieval, citation, the guard and the UI
 all consume `KnowledgeUnit` and know nothing about where a unit came from.
 
 Two behaviours in `scripts/ingest.ts` exist for maintenance rather than the happy path:
@@ -86,6 +86,27 @@ Two behaviours in `scripts/ingest.ts` exist for maintenance rather than the happ
 
 `pnpm ingest --offline` skips the network adapters and keeps their committed units, so a LinkedIn
 outage cannot empty the knowledge base.
+
+## Pointing it at someone else
+
+Who the knowledge base is about comes from env, read by `getSubject()` in `lib/config.ts`:
+
+| Variable | Effect |
+| --- | --- |
+| `SUBJECT_NAME` | Required. Full name, used in the system prompt's first line. Missing means a loud error, never a page about nobody. |
+| `SUBJECT_SHORT_NAME` | How the page and fallbacks refer to them. Defaults to `SUBJECT_NAME`. |
+| `LINKEDIN_PROFILE` | Full profile URL. Blank means the LinkedIn adapter is not built and the text stops mentioning LinkedIn. |
+| `GITHUB_USERNAME` | Blank means the same for GitHub. |
+
+The CV is always a source, read from `knowledge/sources/cv.md`.
+
+Fixed text never uses a pronoun for the subject. A template gets forked by people it has never
+met, so it refers to them by name instead of guessing.
+
+`knowledge/sources/github-note.md` is optional. When present, its text is appended verbatim to the
+`github:public-footprint-scope` unit. It exists because some statements about a public profile are
+judgements only its owner can make ("these are tutorial repos", "the real projects are private"),
+and those belong in data the owner writes, not in adapter code.
 
 ## The conflicts, gaps and stale facts
 

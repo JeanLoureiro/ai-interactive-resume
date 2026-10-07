@@ -1,8 +1,6 @@
 import type { KnowledgeUnit } from "../models";
 import { type SourceAdapter, slugify } from "./types";
 
-const PROFILE_URL = "https://au.linkedin.com/in/jeanloureiro";
-
 /** A logged-out request renders a real browser UA differently from a bare client. */
 const USER_AGENT =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36";
@@ -47,12 +45,13 @@ function findPerson(payload: unknown): PersonNode | undefined {
   );
 }
 
-export const linkedinAdapter: SourceAdapter = {
+/** `profileUrl` comes from LINKEDIN_PROFILE. Not configured means this adapter is never built. */
+export const createLinkedinAdapter = (profileUrl: string): SourceAdapter => ({
   name: "linkedin",
-  description: `Public LinkedIn profile (${PROFILE_URL}), logged-out view — most fields are masked by LinkedIn`,
+  description: `Public LinkedIn profile (${profileUrl}), logged-out view — most fields are masked by LinkedIn`,
 
   async load(): Promise<KnowledgeUnit[]> {
-    const response = await fetch(PROFILE_URL, {
+    const response = await fetch(profileUrl, {
       headers: { "user-agent": USER_AGENT, accept: "text/html" },
       signal: AbortSignal.timeout(25_000),
     });
@@ -139,4 +138,4 @@ export const linkedinAdapter: SourceAdapter = {
 
     return units;
   },
-};
+});

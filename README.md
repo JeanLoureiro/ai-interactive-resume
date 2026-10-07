@@ -18,7 +18,7 @@ Requires Node 22+ and `pnpm`. Takes about two minutes.
 
 ```bash
 pnpm install
-cp .env.example .env.local        # then add your ANTHROPIC_API_KEY
+cp .env.example .env.local        # then add your ANTHROPIC_API_KEY and SUBJECT_NAME
 pnpm dev                          # http://localhost:3000
 ```
 
@@ -35,13 +35,28 @@ pnpm ask "Does Jean have Kubernetes experience?"   # not in the corpus — watch
 | `pnpm dev` | The web interface |
 | `pnpm ask "<question>"` | One question, answer plus sources, in the terminal |
 | `pnpm eval` | Scores the 24-case eval set and writes results |
-| `pnpm test` | 32 tests over the guard, fallbacks, redaction and retrieval |
-| `pnpm ingest` | Rebuilds the knowledge base from all three sources |
+| `pnpm test` | 40 tests over the guard, fallbacks, redaction, retrieval and config |
+| `pnpm ingest` | Rebuilds the knowledge base from every configured source |
 | `pnpm ingest --offline` | Rebuilds from the CV only, keeping committed network units |
 
 **You need your own Anthropic API key** (`console.anthropic.com`). A full 24-case evaluation run
 costs roughly **$0.30** on Sonnet 5 and **$0.15** on Haiku 4.5. Nothing else in the project needs
 credentials — ingestion, retrieval, the guard and the tests all run without one.
+
+## Make it yours
+
+Out of the box this answers about Jean, as a worked example. To point it at someone else:
+
+1. Set `SUBJECT_NAME` (and optionally `SUBJECT_SHORT_NAME`, `LINKEDIN_PROFILE`, `GITHUB_USERNAME`)
+   in `.env.local`. A blank LinkedIn or GitHub value skips that source.
+2. Replace `knowledge/sources/cv.md` with your own CV in the same format. Leave out your phone
+   number and email: what is not in the file can never be leaked.
+3. Delete or rewrite `knowledge/sources/github-note.md` and set `data/conflicts.json` to `[]`.
+   Both describe Jean.
+4. Run `pnpm ingest`, then `pnpm dev`.
+
+The page is prerendered, so after changing `.env` restart `pnpm dev` or rebuild. The eval set in
+`eval/dataset.jsonl` is Jean-specific too. Treat it as an example of how to write your own.
 
 ## What it knows
 

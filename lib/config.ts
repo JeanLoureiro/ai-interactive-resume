@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 /** Published Anthropic list prices, USD per million tokens. Used to turn real token counts from
  *  `response.usage` into a real cost per question — the brief asks for a measured number, not an
  *  estimate, so this only ever multiplies tokens the API actually reported. */
@@ -39,4 +41,56 @@ export function getApiKey(): string {
     );
   }
   return key;
+}
+
+/** Blank env values count as unset, so `GITHUB_USERNAME=` in a copied .env disables the source. */
+const optional = (schema: z.ZodString) =>
+  z.preprocess((value) => (typeof value === "string" && value.trim() === "" ? undefined : value), schema.optional());
+
+const SubjectSchema = z.object({
+  name: z.string().trim().min(1, "SUBJECT_NAME is not set. Add the person this assistant is about to .env — see the README."),
+  shortName: optional(z.string().trim()),
+  linkedinProfile: optional(z.string().trim().url("LINKEDIN_PROFILE must be a full URL, e.g. https://www.linkedin.com/in/you")),
+  githubUsername: optional(z.string().trim()),
+});
+
+/** Who the assistant answers about. Every subject-facing string is built from this. */
+export interface Subject {
+  /** Full name, used where precision matters: the system prompt's first line. */
+  name: string;
+  /** How the UI and prose refer to them, e.g. a first name. Defaults to `name`. */
+  shortName: string;
+  linkedinProfile?: string;
+  githubUsername?: string;
+}
+
+export function getSubject(): Subject {
+  const parsed = SubjectSchema.safeParse({
+    name: process.env["SUBJECT_NAME"] ?? "",
+    shortName: process.env["SUBJECT_SHORT_NAME"],
+    linkedinProfile: process.env["LINKEDIN_PROFILE"],
+    githubUsername: process.env["GITHUB_USERNAME"],
+  });
+  if (!parsed.success) {
+    // Thrown, not defaulted: an assistant answering about an unnamed person is a configuration
+    // fault, and it must not reach a visitor looking like a working page.
+    throw new Error(parsed.error.issues.map((issue) => issue.message).join("\n"));
+  }
+  const { name, shortName, linkedinProfile, githubUsername } = parsed.data;
+  return {
+    name,
+    shortName: shortName ?? name,
+    ...(linkedinProfile ? { linkedinProfile } : {}),
+    ...(githubUsername ? { githubUsername } : {}),
+  };
+}
+
+/** "CV, public LinkedIn profile and public GitHub repositories", trimmed to what is configured. */
+export function describeSources(subject: Subject): string {
+  const sources = ["CV"];
+  if (subject.linkedinProfile) sources.push("public LinkedIn profile");
+  if (subject.githubUsername) sources.push("public GitHub repositories");
+  return sources.length === 1
+    ? sources[0]!
+    : `${sources.slice(0, -1).join(", ")} and ${sources.at(-1)!}`;
 }

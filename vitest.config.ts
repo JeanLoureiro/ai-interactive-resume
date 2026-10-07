@@ -8,5 +8,12 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["tests/**/*.test.ts"],
+    // The worked example's subject, so tests run offline and deterministically without a .env.
+    env: {
+      SUBJECT_NAME: "Jean Loureiro",
+      SUBJECT_SHORT_NAME: "Jean",
+      LINKEDIN_PROFILE: "https://au.linkedin.com/in/jeanloureiro",
+      GITHUB_USERNAME: "JeanLoureiro",
+    },
   },
 });

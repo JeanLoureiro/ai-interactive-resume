@@ -7,7 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "ingest": "tsx scripts/ingest.ts",
+    "ingest": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/ingest.ts",
     "eval": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/eval.ts",
     "ask": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/ask.ts",
     "test": "vitest run",
