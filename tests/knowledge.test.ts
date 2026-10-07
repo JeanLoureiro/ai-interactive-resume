@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { getKnowledgeBase } from "../lib/knowledge";
+import { buildKnowledgeBase } from "../lib/knowledge";
+import { jsonKnowledgeStore } from "../lib/db/knowledge-store";
 
-const kb = getKnowledgeBase();
+// The committed snapshot specifically: it is what the no-database demo serves and what ingest writes.
+const kb = buildKnowledgeBase(await jsonKnowledgeStore.load());
 
 describe("knowledge base integrity", () => {
   it("loads units and conflicts", () => {
@@ -15,7 +17,7 @@ describe("knowledge base integrity", () => {
     expect(new Set(kb.units.map((u) => u.id)).size).toBe(kb.units.length);
   });
 
-  // getKnowledgeBase throws on a dangling reference, so reaching this assertion is itself the
+  // buildKnowledgeBase throws on a dangling reference, so reaching this assertion is itself the
   // result. It is stated explicitly because the failure mode — a conflict that silently stops
   // firing after a unit is renamed — is invisible in the answers.
   it("has no conflict pointing at a missing unit", () => {

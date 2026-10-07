@@ -1,3 +1,4 @@
+import { getKnowledgeBase } from "./knowledge";
 import { retrieve } from "./retrieval";
 import { generate, GenerationError } from "./generation";
 import { checkCitations } from "./guard";
@@ -27,7 +28,7 @@ export interface AskOptions {
 export async function ask(question: string, options: AskOptions = {}): Promise<AssistantResponse> {
   const model = options.model ?? getModel();
   const startedAt = Date.now();
-  const { units, conflicts } = retrieve(question, options.topK ?? getTopK());
+  const { units, conflicts } = retrieve(await getKnowledgeBase(), question, options.topK ?? getTopK());
 
   const base = {
     retrieved: units,

@@ -8,6 +8,7 @@
  * text is the clearest way to check grounding while building.
  */
 import { ask } from "../lib/pipeline";
+import { closeDb } from "../lib/db/client";
 
 const STATUS_LABEL: Record<string, string> = {
   answered: "ANSWERED",
@@ -63,7 +64,10 @@ async function main(): Promise<void> {
   );
 }
 
-main().catch((error: unknown) => {
-  console.error(error);
-  process.exit(1);
-});
+main()
+  .catch((error: unknown) => {
+    console.error(error);
+    process.exitCode = 1;
+  })
+  // An open database connection would otherwise keep the process alive after the answer prints.
+  .finally(closeDb);

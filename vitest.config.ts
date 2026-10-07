@@ -14,6 +14,8 @@ export default defineConfig({
       SUBJECT_SHORT_NAME: "Jean",
       LINKEDIN_PROFILE: "https://au.linkedin.com/in/jeanloureiro",
       GITHUB_USERNAME: "JeanLoureiro",
+      // Forces the JSON snapshot, so a DATABASE_URL in the developer's shell never reaches tests.
+      DATABASE_URL: "",
     },
   },
 });

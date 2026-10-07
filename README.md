@@ -22,6 +22,18 @@ cp .env.example .env.local        # then add your ANTHROPIC_API_KEY and SUBJECT_
 pnpm dev                          # http://localhost:3000
 ```
 
+That runs as a read-only demo from the committed JSON snapshot. To run it on Postgres, as a
+deployment does:
+
+```bash
+docker compose up -d              # local Postgres with pgvector, port 54329
+# set DATABASE_URL=postgres://resume:resume@localhost:54329/resume in .env.local
+pnpm db:setup                     # create the tables, then ingest into them
+```
+
+On a free Supabase project, set `CRON_SECRET` too: `vercel.json` schedules a daily
+`/api/cron/keepalive` query so the project is never idle long enough to pause.
+
 Or from the terminal, which shows the same information without the browser:
 
 ```bash
@@ -38,6 +50,8 @@ pnpm ask "Does Jean have Kubernetes experience?"   # not in the corpus — watch
 | `pnpm test` | 40 tests over the guard, fallbacks, redaction, retrieval and config |
 | `pnpm ingest` | Rebuilds the knowledge base from every configured source |
 | `pnpm ingest --offline` | Rebuilds from the CV only, keeping committed network units |
+| `pnpm db:setup` | Applies database migrations, then ingests (needs `DATABASE_URL`) |
+| `pnpm db:generate` | Writes a new SQL migration after a schema change in `lib/db/schema.ts` |
 
 **You need your own Anthropic API key** (`console.anthropic.com`). A full 24-case evaluation run
 costs roughly **$0.30** on Sonnet 5 and **$0.15** on Haiku 4.5. Nothing else in the project needs
@@ -53,7 +67,7 @@ Out of the box this answers about Jean, as a worked example. To point it at some
    number and email: what is not in the file can never be leaked.
 3. Delete or rewrite `knowledge/sources/github-note.md` and set `data/conflicts.json` to `[]`.
    Both describe Jean.
-4. Run `pnpm ingest`, then `pnpm dev`.
+4. Run `pnpm ingest` (or `pnpm db:setup` with a database), then `pnpm dev`.
 
 The page is prerendered, so after changing `.env` restart `pnpm dev` or rebuild. The eval set in
 `eval/dataset.jsonl` is Jean-specific too. Treat it as an example of how to write your own.
@@ -211,9 +225,11 @@ Sent email right after
 
 ```
 knowledge/sources/cv.md       redacted transcription — the human-readable source of truth
-data/knowledge-units.json     the built index; what the assistant can see
+data/knowledge-units.json     snapshot of what the assistant can see; served when there is no database
 data/conflicts.json           known disagreements, as data
 lib/sources/                  one adapter per source, behind one interface
+lib/db/                       Postgres schema, client and knowledge store
+drizzle/                      committed SQL migrations
 lib/retrieval.ts              BM25 + conflict force-inclusion
 lib/generation.ts             the system prompt and the structured call
 lib/guard.ts                  the enforcement point

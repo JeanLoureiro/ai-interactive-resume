@@ -1,9 +1,10 @@
 /**
- * Builds data/knowledge-units.json from every registered source adapter.
+ * Builds the knowledge base from every configured source adapter.
  *
- * Run with `pnpm ingest`. The output is committed: the repo must be runnable and reviewable without
- * network access, and a reviewer should be able to read exactly what the assistant can see without
- * running anything at all.
+ * Run with `pnpm ingest`. Always writes data/knowledge-units.json, the readable snapshot: a reviewer
+ * can see exactly what the assistant knows without running anything, and with no DATABASE_URL the
+ * app serves it directly. With DATABASE_URL set, the same units and data/conflicts.json also replace
+ * the database contents in one transaction.
  *
  * `--offline` skips network-backed adapters and keeps their existing units, so a LinkedIn or GitHub
  * outage cannot silently empty the knowledge base.
@@ -16,8 +17,12 @@ import { cvAdapter } from "../lib/sources/cv";
 import { createLinkedinAdapter } from "../lib/sources/linkedin";
 import { createGithubAdapter } from "../lib/sources/github";
 import { getSubject } from "../lib/config";
+import { buildKnowledgeBase } from "../lib/knowledge";
+import { closeDb, getDb, isDatabaseConfigured } from "../lib/db/client";
+import { replaceKnowledge } from "../lib/db/knowledge-store";
 
 const OUTPUT = path.join(process.cwd(), "data", "knowledge-units.json");
+const CONFLICTS = path.join(process.cwd(), "data", "conflicts.json");
 
 /** The CV is always a source; LinkedIn and GitHub only when their env vars are set. */
 function configuredAdapters(): SourceAdapter[] {
@@ -76,11 +81,28 @@ async function main(): Promise<void> {
   }
 
   const parsed = KnowledgeUnitSchema.array().parse(units);
+
+  // Validated as a whole before anything is written, so a conflict left pointing at a unit that a
+  // source no longer returns stops the ingest here, instead of breaking the app on its next load.
+  const kb = buildKnowledgeBase({
+    units: parsed,
+    conflicts: JSON.parse(await readFile(CONFLICTS, "utf8")) as unknown[],
+  });
+
   await writeFile(OUTPUT, `${JSON.stringify(parsed, null, 2)}\n`, "utf8");
   console.log(`\n${parsed.length} units -> ${path.relative(process.cwd(), OUTPUT)}`);
+
+  if (isDatabaseConfigured()) {
+    await replaceKnowledge(getDb(), kb.units, kb.conflicts);
+    console.log(`${kb.units.length} units, ${kb.conflicts.length} conflicts -> database`);
+  } else {
+    console.log("DATABASE_URL not set: database skipped, the app will serve the snapshot.");
+  }
 }
 
-main().catch((error: unknown) => {
-  console.error(error);
-  process.exit(1);
-});
+main()
+  .catch((error: unknown) => {
+    console.error(error);
+    process.exitCode = 1;
+  })
+  .finally(closeDb);

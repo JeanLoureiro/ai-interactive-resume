@@ -14,6 +14,7 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { z } from "zod";
 import { ask } from "../lib/pipeline";
+import { closeDb } from "../lib/db/client";
 import { DEFAULT_MODEL, isPricedModel } from "../lib/config";
 
 const CaseSchema = z.object({
@@ -211,7 +212,10 @@ async function main(): Promise<void> {
   console.log(`\nFull transcripts -> ${path.relative(process.cwd(), outFile)}`);
 }
 
-main().catch((error: unknown) => {
-  console.error(error);
-  process.exit(1);
-});
+main()
+  .catch((error: unknown) => {
+    console.error(error);
+    process.exitCode = 1;
+  })
+  // An open database connection would otherwise keep the process alive after the answer prints.
+  .finally(closeDb);

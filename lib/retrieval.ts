@@ -1,4 +1,4 @@
-import { getKnowledgeBase } from "./knowledge";
+import type { KnowledgeBase } from "./knowledge";
 import type { Conflict, KnowledgeUnit } from "./models";
 
 /**
@@ -77,11 +77,16 @@ function buildIndex(units: KnowledgeUnit[]): Bm25Index {
   };
 }
 
-let cachedIndex: Bm25Index | undefined;
+/** One index per knowledge base, built on first use. A reloaded knowledge base gets a fresh index. */
+const indexes = new WeakMap<KnowledgeBase, Bm25Index>();
 
-function getIndex(): Bm25Index {
-  cachedIndex ??= buildIndex(getKnowledgeBase().units);
-  return cachedIndex;
+function getIndex(kb: KnowledgeBase): Bm25Index {
+  let index = indexes.get(kb);
+  if (!index) {
+    index = buildIndex(kb.units);
+    indexes.set(kb, index);
+  }
+  return index;
 }
 
 export interface ScoredUnit {
@@ -98,8 +103,9 @@ export interface RetrievalResult {
   conflicts: Conflict[];
 }
 
-export function retrieve(query: string, topK = 5): RetrievalResult {
-  const index = getIndex();
+/** Pure: the knowledge base is passed in, so this never touches a database or a file. */
+export function retrieve(kb: KnowledgeBase, query: string, topK = 5): RetrievalResult {
+  const index = getIndex(kb);
   const queryTerms = tokenize(query);
   const documentCount = index.documents.length;
 
@@ -121,7 +127,7 @@ export function retrieve(query: string, topK = 5): RetrievalResult {
     .sort((a, b) => b.score - a.score)
     .slice(0, topK);
 
-  const { conflictsByUnitId, byId } = getKnowledgeBase();
+  const { conflictsByUnitId, byId } = kb;
   const selected = new Map<string, KnowledgeUnit>(ranked.map(({ unit }) => [unit.id, unit]));
   const triggered = new Map<string, Conflict>();
   let forcedCount = 0;

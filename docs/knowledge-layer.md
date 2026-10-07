@@ -4,9 +4,10 @@ What the assistant can see, how it got there, and what it does when the sources 
 
 ## What the assistant can see
 
-43 knowledge units, all committed to `data/knowledge-units.json`. Read that file and you know
-exactly what the assistant knows — there is no other store, no embedding it can reach, no live
-lookup at question time.
+43 knowledge units. `pnpm ingest` always writes them to `data/knowledge-units.json`, and with
+`DATABASE_URL` set it also replaces the `knowledge_units` and `conflicts` tables with the same data,
+in one transaction. Either way, read that file and you know exactly what the assistant knows. There
+is no embedding it can reach and no live lookup at question time.
 
 | Source | Units | How it is collected |
 | --- | ---: | --- |
@@ -86,6 +87,10 @@ Two behaviours in `scripts/ingest.ts` exist for maintenance rather than the happ
 
 `pnpm ingest --offline` skips the network adapters and keeps their committed units, so a LinkedIn
 outage cannot empty the knowledge base.
+
+Ingest also checks the whole knowledge base, including every conflict's unit ids, **before writing
+anything**. If a source stops returning a unit that `data/conflicts.json` points at, the ingest
+stops with the conflict's id, and both the snapshot and the database keep their previous contents.
 
 ## Pointing it at someone else
 

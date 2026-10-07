@@ -5,11 +5,11 @@ This is written so a reviewer can predict the system's behaviour without reading
 ## The shape of it
 
 ```
-                    ┌── offline, output committed ──┐
-  cv.md ─────┐
-  LinkedIn ──┼──► adapters ──► knowledge-units.json ──► BM25 index
-  GitHub ────┘                 conflicts.json
-                    └───────────────────────────────┘
+                    ┌──────────── pnpm ingest ────────────┐
+  cv.md ─────┐                 ┌─► knowledge-units.json (snapshot)
+  LinkedIn ──┼──► adapters ────┤                                    ──► BM25 index
+  GitHub ────┘                 └─► Postgres, if DATABASE_URL is set
+                    └─────────────────────────────────────┘
 
   question ──► retrieve top-k (+ conflict partners) ──► Claude (messages.parse)
                                                               │
@@ -19,8 +19,13 @@ This is written so a reviewer can predict the system's behaviour without reading
                               cited answer                        deterministic fallback
 ```
 
-Ingestion runs offline and its output is committed, so the repo runs without network access and a
-reviewer can read exactly what the assistant knows. Query time is one deterministic pass.
+Ingestion runs offline, never at question time. Its output is always written as a readable
+snapshot, so a reviewer can see exactly what the assistant knows. With `DATABASE_URL` set, the app
+loads the knowledge base from Postgres. Without it, the app serves the committed snapshot as a
+read-only demo, so the repo still runs with nothing but an API key. Both go through one
+`KnowledgeStore` interface (`lib/knowledge.ts`) and the same validation, and a test proves they
+retrieve identically for every eval question. The knowledge base is loaded once per server
+instance, so the database is not on the per-question path. Query time is one deterministic pass.
 
 Who the assistant is about is configuration, not code: `getSubject()` in `lib/config.ts` reads
 `SUBJECT_NAME` and the optional profile variables, and the system prompt, fallbacks, adapters and
@@ -163,6 +168,7 @@ The eval runs against both so this is decided by numbers. See `docs/evaluation.m
 | Model reports insufficient context | Its own explanation, plus a template stating the knowledge base's limits | The model can say *what* was missing better than a template can |
 | Retrieval returns nothing | Template refusal, no model call at all | Saves a call and makes the refusal certain rather than likely |
 | `ANTHROPIC_API_KEY` unset | Loud error, not a user-facing refusal | A configuration fault must not masquerade as "no such fact" |
+| Database unreachable or not migrated | Loud error naming `pnpm db:setup` when tables are missing; nothing is cached, so the next request retries | Same reason: an outage must never read as an empty record |
 
 Every refusal string is a template, never model output. A generated refusal can invent its own
 reason — explaining a fact "isn't in Jean's background" when the cause was a timeout. Since a
