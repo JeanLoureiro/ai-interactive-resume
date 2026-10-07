@@ -1,0 +1,49 @@
+[
+  {
+    "id": "employment-status-stale-on-linkedin",
+    "kind": "stale",
+    "unitIds": ["cv:kpmg-manager-senior-software-engineer", "linkedin:current-employer"],
+    "resolutionNote": "The two sources disagree about whether the KPMG role is current. The CV gives it an end date of 2026-08; the public LinkedIn profile shows KPMG with no end date, which LinkedIn renders as the current position. The CV is the more recently maintained source and is treated as correct: the KPMG role ended in August 2026. LinkedIn is stale. When a question turns on where Jean works now, say plainly that the sources disagree, give the CV's answer, and name LinkedIn as the stale one rather than silently picking a side."
+  },
+  {
+    "id": "job-title-differs-between-sources",
+    "kind": "contradiction",
+    "unitIds": ["cv:profile", "linkedin:profile"],
+    "resolutionNote": "The CV titles Jean 'Senior AI Engineer'. The public LinkedIn headline reads 'Senior Software Engineer working at the intersection of frontend systems and…' (LinkedIn truncates it). These are self-described titles from different points in time, not a contradiction about a fact someone else awarded. Report both and attribute each to its source; do not present either as the single official title."
+  },
+  {
+    "id": "education-absent-from-cv",
+    "kind": "gap",
+    "unitIds": ["linkedin:education-the-university-of-queensland", "cv:profile"],
+    "resolutionNote": "The CV has no education section at all. The only record of education is the public LinkedIn profile, which lists The University of Queensland, 2015-2017, with no degree or field of study shown. Answer education questions from LinkedIn, say that the CV does not cover education, and do not state a degree, qualification or field of study — none is recorded in any source."
+  },
+  {
+    "id": "certifications-differ-between-sources",
+    "kind": "gap",
+    "unitIds": ["cv:scrum-master", "cv:kanban-management-professional-i", "linkedin:masking-limitation"],
+    "resolutionNote": "The CV lists two certificates: Scrum Master (scrum.org) and KMP I, Kanban System Design. LinkedIn's certification section is not readable from the logged-out profile, so it can neither confirm nor add to this list. Treat the CV list as the complete known set and do not claim any certification outside it."
+  },
+  {
+    "id": "public-github-does-not-evidence-cv-projects",
+    "kind": "gap",
+    "unitIds": [
+      "github:public-footprint-scope",
+      "cv:marketing-triage-ec-pohl-co",
+      "cv:pohly-private-wealth-client-portal",
+      "cv:financial-sanity",
+      "cv:the-clubhouse-poker"
+    ],
+    "resolutionNote": "The CV describes four current projects. The public GitHub profile contains none of them — it holds 15 repositories last updated between 2014 and 2023, mostly course follow-alongs and forks. The projects are in private repositories and Jean's stated position is that they can be shared on request. When asked to see code or to verify a project, say what the public profile actually contains, say that it is not a representation of current work, and offer the private-on-request route. Do not imply the projects are unverified or doubtful, and do not imply the public repositories are recent or representative."
+  },
+  {
+    "id": "projects-overlap-full-time-employment",
+    "kind": "ambiguity",
+    "unitIds": [
+      "cv:kpmg-manager-senior-software-engineer",
+      "cv:the-clubhouse-poker",
+      "cv:financial-sanity",
+      "cv:pohly-private-wealth-client-portal"
+    ],
+    "resolutionNote": "Several project date ranges overlap the full-time KPMG role, which ran to 2026-08: The Clubhouse Poker from 2024-11, Financial Sanity from 2025-01, Pohly from 2025-11. This is concurrent independent and side work alongside full-time employment, which is normal and not a contradiction in the record. Explain the overlap as side work, cite both the employment unit and the project units, and do not treat it as an error, do not refuse to answer, and do not revise the KPMG end date to make the ranges disjoint."
+  }
+]

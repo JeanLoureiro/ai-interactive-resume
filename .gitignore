@@ -1,0 +1,20 @@
+node_modules/
+.next/
+out/
+build/
+
+# Secrets — never commit a real key
+.env
+.env.local
+.env*.local
+
+# Lavish planning session scratch
+.lavish/
+
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+
+# DOCS
+docs/step-by-step.md
