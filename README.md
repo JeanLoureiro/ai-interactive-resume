@@ -72,6 +72,11 @@ Out of the box this answers about Jean, as a worked example. To point it at some
    Both describe Jean.
 4. Run `pnpm ingest` (or `pnpm db:setup` with a database), then `pnpm dev`.
 
+**Updating it later without a terminal:** set `ADMIN_PASSWORD` (and a database) and open `/admin`.
+Upload a new resume, review every new, changed and removed unit plus every line the guard dropped,
+then publish. The uploaded file is read in memory and never stored. Use a long random password:
+failed logins are throttled per server instance, not globally.
+
 The page is prerendered, so after changing `.env` restart `pnpm dev` or rebuild. The eval set in
 `eval/dataset.jsonl` is Jean-specific too. Treat it as an example of how to write your own.
 

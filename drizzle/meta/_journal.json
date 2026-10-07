@@ -8,6 +8,13 @@
       "when": 1791347904262,
       "tag": "0000_knowledge",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791354889767,
+      "tag": "0001_knowledge_drafts",
+      "breakpoints": true
     }
   ]
 }

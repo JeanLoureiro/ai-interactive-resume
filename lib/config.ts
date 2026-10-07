@@ -1,4 +1,3 @@
-import path from "node:path";
 import { z } from "zod";
 
 /** Published Anthropic list prices, USD per million tokens. Used to turn real token counts from
@@ -96,7 +95,16 @@ export function describeSources(subject: Subject): string {
     : `${sources.slice(0, -1).join(", ")} and ${sources.at(-1)!}`;
 }
 
-/** The resume file to ingest. Defaults to the worked example's format-contract Markdown CV. */
-export function getResumePath(): string {
-  return path.resolve(process.env["RESUME_PATH"]?.trim() || path.join("knowledge", "sources", "cv.md"));
+/**
+ * Model that splits a PDF or DOCX resume into entries. Separate from the answering model because the
+ * task is copying, not reasoning: measured on a real resume, Haiku kept the same 23 units as Sonnet
+ * with nothing dropped by the guard, in 31 s instead of about 2 minutes, at a sixth of the cost.
+ */
+export function getResumeModel(): string {
+  return process.env["RESUME_MODEL"]?.trim() || "claude-haiku-4-5";
+}
+
+/** Blank or unset means /admin does not exist. */
+export function getAdminPassword(): string | undefined {
+  return process.env["ADMIN_PASSWORD"] || undefined;
 }

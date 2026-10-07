@@ -5,7 +5,7 @@
  *   pnpm resume:preview ./resume.pdf --json units.json   # also save the units for inspection
  */
 import { readFile, writeFile } from "node:fs/promises";
-import { getModel } from "../lib/config";
+import { getResumeModel } from "../lib/config";
 import { getLlmProvider } from "../lib/llm";
 import { formatFromName } from "../lib/resume/extract";
 import { formatReport, resumeToUnits } from "../lib/resume";
@@ -19,7 +19,7 @@ async function main(): Promise<void> {
   }
   const result = await resumeToUnits(new Uint8Array(await readFile(file)), formatFromName(file), {
     provider: getLlmProvider,
-    model: getModel(),
+    model: getResumeModel(),
     retrievedAt: new Date().toISOString().slice(0, 10),
   });
 

@@ -194,6 +194,13 @@ refusal would read as a fact about Jean rather than a fact about the network.
   transcription time rather than filtered at runtime. There is nothing to leak. Asserted by test.
 - **Exposure.** The deployment sits behind Vercel Deployment Protection, so the endpoint is not an
   open, credit-burning prompt-injection target. Input is capped at 2000 characters.
+- **Uploaded resumes.** `/admin` exists only when `ADMIN_PASSWORD` is set; otherwise every admin
+  route is a 404. The password is compared in constant time, the session is a signed, expiring,
+  httpOnly, `SameSite=Strict` cookie keyed from the password (changing it signs everyone out), and
+  admin requests must carry a same-origin `Origin` header. Uploads are capped at 4MB, typed by
+  their contents as well as their name, parsed in memory and discarded: the database holds only the
+  scrubbed units and the guard's report, never the file. Nothing goes live until the owner
+  publishes, and a publish that would leave a known conflict dangling is refused.
 
 ## Measured cost and latency
 

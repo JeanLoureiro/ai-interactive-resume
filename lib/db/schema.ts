@@ -1,4 +1,4 @@
-import { integer, pgTable, text } from "drizzle-orm/pg-core";
+import { integer, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 /**
  * Mirrors KnowledgeUnitSchema in lib/models.ts column for column.
@@ -32,4 +32,19 @@ export const conflicts = pgTable("conflicts", {
   resolutionNote: text("resolution_note").notNull(),
   /** File order; it decides the order disagreements appear in the prompt. */
   position: integer("position").notNull(),
+});
+
+/**
+ * A resume uploaded in /admin, waiting for the owner to review and publish it.
+ *
+ * Holds the scrubbed units and the guard's report, never the uploaded file: the file is parsed in
+ * memory and discarded, so the database cannot leak a phone number the resume contained.
+ * One row at most; a new upload replaces it.
+ */
+export const knowledgeDrafts = pgTable("knowledge_drafts", {
+  id: text("id").primaryKey(),
+  units: jsonb("units").notNull(),
+  report: jsonb("report").notNull(),
+  fileName: text("file_name").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

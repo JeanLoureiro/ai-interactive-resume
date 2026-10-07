@@ -60,21 +60,37 @@ export function buildKnowledgeBase(raw: RawKnowledge): KnowledgeBase {
   return { units, conflicts, byId, conflictsByUnitId };
 }
 
-let cached: Promise<KnowledgeBase> | undefined;
+/**
+ * How long a loaded knowledge base is trusted. After a publish in /admin, the instance that
+ * published reloads at once (invalidateKnowledgeBase); every other instance within this window.
+ * Reloading is one query, so it never puts the database on every question's path.
+ */
+const CACHE_MS = 5 * 60 * 1000;
+
+let cached: { knowledgeBase: Promise<KnowledgeBase>; loadedAt: number } | undefined;
 
 /**
- * Loaded and validated once per server instance; the corpus is static between ingests.
+ * Loaded and validated once per server instance per CACHE_MS.
  *
  * The promise is cached, not the value, so concurrent first requests share one load. A failed load
  * is not cached: the next request retries instead of serving a broken instance forever.
  */
 export function getKnowledgeBase(): Promise<KnowledgeBase> {
-  cached ??= getKnowledgeStore()
-    .load()
-    .then(buildKnowledgeBase)
-    .catch((error: unknown) => {
-      cached = undefined;
-      throw error;
-    });
-  return cached;
+  if (!cached || Date.now() - cached.loadedAt > CACHE_MS) {
+    const knowledgeBase: Promise<KnowledgeBase> = getKnowledgeStore()
+      .load()
+      .then(buildKnowledgeBase)
+      .catch((error: unknown) => {
+        // Only forget this load: a newer one may already have replaced it.
+        if (cached?.knowledgeBase === knowledgeBase) cached = undefined;
+        throw error;
+      });
+    cached = { knowledgeBase, loadedAt: Date.now() };
+  }
+  return cached.knowledgeBase;
+}
+
+/** Called after a publish, so the publishing instance serves the new knowledge base immediately. */
+export function invalidateKnowledgeBase(): void {
+  cached = undefined;
 }
