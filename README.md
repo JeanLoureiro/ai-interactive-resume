@@ -52,6 +52,7 @@ pnpm ask "Does Jean have Kubernetes experience?"   # not in the corpus — watch
 | `pnpm ingest --offline` | Rebuilds from the CV only, keeping committed network units |
 | `pnpm db:setup` | Applies database migrations, then ingests (needs `DATABASE_URL`) |
 | `pnpm db:generate` | Writes a new SQL migration after a schema change in `lib/db/schema.ts` |
+| `pnpm eval:retrieval` | Recall@5 for BM25 and hybrid retrieval on every gold case. No model call, $0 |
 | `pnpm resume:preview <file>` | Shows the units a resume would produce and every line the guard dropped. Writes nothing |
 
 **You need your own Anthropic API key** (`console.anthropic.com`). A full 24-case evaluation run
@@ -99,12 +100,12 @@ Full detail, including what was redacted and why: **[docs/knowledge-layer.md](do
 ## How it works
 
 ```
-question ──► BM25 top-k (+ conflict partners) ──► Claude (messages.parse, Zod schema)
-                                                          │
-                                              deterministic guard
-                                                          │
-                              ┌───────────────────────────┴──────────────┐
-                        cited answer                        deterministic fallback
+question ──► BM25 + embeddings, fused (+ conflict partners) ──► Claude (Zod schema)
+                                                                   │
+                                                          deterministic guard
+                                                                   │
+                                       ┌───────────────────────────┴──────────────┐
+                                 cited answer                          deterministic fallback
 ```
 
 Retrieval runs in TypeScript before the model call, so there are no tools and no agent loop. The

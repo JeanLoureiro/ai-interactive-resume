@@ -8,6 +8,9 @@ build/
 .env.local
 .env*.local
 
+# Embedding model files, fetched by `pnpm models:fetch` during the build
+models/
+
 # Lavish planning session scratch
 .lavish/
 

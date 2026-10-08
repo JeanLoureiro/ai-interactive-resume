@@ -2,12 +2,12 @@ import type { KnowledgeBase } from "./knowledge";
 import type { Conflict, KnowledgeUnit } from "./models";
 
 /**
- * BM25 over ~43 short units.
+ * BM25, optionally fused with embedding similarity (hybrid retrieval).
  *
- * Why lexical rather than embeddings: at this corpus size an embedding provider buys no measurable
- * recall and costs a dependency, a second network call on every question, and a second thing that
- * can be down. Interview questions are also unusually keyword-dense — "KPMG", "Storybook",
- * "Supabase", "Scrum" — which is exactly where BM25 is strong.
+ * BM25 is strongest on the exact names interview questions are full of ("KPMG", "Storybook",
+ * "Scrum"); embeddings find meaning when the words differ ("chatbot" for "enterprise assistant").
+ * Fused, measured on the eval set: recall@5 14/23 with BM25 alone, 18/23 hybrid, nothing lost.
+ * See docs/architecture.md and docs/evaluation.md.
  *
  * Why retrieval at all, when the whole corpus would fit in one prompt: see docs/architecture.md.
  * The short version is that it keeps the citation guard meaningful.
@@ -103,13 +103,27 @@ export interface RetrievalResult {
   conflicts: Conflict[];
 }
 
-/** Pure: the knowledge base is passed in, so this never touches a database or a file. */
-export function retrieve(kb: KnowledgeBase, query: string, topK = 5): RetrievalResult {
+/** Meaning-based input for hybrid retrieval, computed by lib/embeddings.ts before the call. */
+export interface SemanticInput {
+  /** The question's vector. */
+  query: Float32Array;
+  /** One vector per unit, in the same order as `kb.units`. */
+  units: Float32Array[];
+  /** Similarity below which a unit is not considered a match at all. Calibrated per model. */
+  minSimilarity: number;
+}
+
+/** How many candidates each ranking contributes to the fusion. */
+const CANDIDATES = 20;
+/** The standard Reciprocal Rank Fusion constant: dampens the advantage of the very top ranks. */
+const RRF_K = 60;
+
+function bm25Rank(kb: KnowledgeBase, query: string): ScoredUnit[] {
   const index = getIndex(kb);
   const queryTerms = tokenize(query);
   const documentCount = index.documents.length;
 
-  const ranked: ScoredUnit[] = index.documents
+  return index.documents
     .map(({ unit, termFrequency, length }) => {
       let score = 0;
       for (const term of queryTerms) {
@@ -124,8 +138,44 @@ export function retrieve(kb: KnowledgeBase, query: string, topK = 5): RetrievalR
       return { unit, score };
     })
     .filter((scored) => scored.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, topK);
+    .sort((a, b) => b.score - a.score);
+}
+
+/** Vectors are normalised, so the dot product is the cosine similarity. */
+function vectorRank(kb: KnowledgeBase, semantic: SemanticInput): ScoredUnit[] {
+  return kb.units
+    .map((unit, i) => {
+      const vector = semantic.units[i]!;
+      let score = 0;
+      for (let d = 0; d < vector.length; d++) score += vector[d]! * semantic.query[d]!;
+      return { unit, score };
+    })
+    .filter((scored) => scored.score >= semantic.minSimilarity)
+    .sort((a, b) => b.score - a.score);
+}
+
+/**
+ * Reciprocal Rank Fusion: each ranking contributes 1 / (RRF_K + rank) per unit. Ranks, not scores,
+ * so a BM25 score never has to be compared with a cosine similarity. Ties keep BM25's order.
+ */
+function fuse(...rankings: ScoredUnit[][]): ScoredUnit[] {
+  const fused = new Map<string, ScoredUnit>();
+  for (const ranking of rankings) {
+    ranking.slice(0, CANDIDATES).forEach(({ unit }, rank) => {
+      const current = fused.get(unit.id) ?? { unit, score: 0 };
+      fused.set(unit.id, { unit, score: current.score + 1 / (RRF_K + rank + 1) });
+    });
+  }
+  return [...fused.values()].sort((a, b) => b.score - a.score);
+}
+
+/**
+ * Pure: the knowledge base and any vectors are passed in, so this never touches a database, a file
+ * or a model. Without `semantic` it is BM25 alone; with it, BM25 and vector rankings are fused.
+ */
+export function retrieve(kb: KnowledgeBase, query: string, topK = 5, semantic?: SemanticInput): RetrievalResult {
+  const lexical = bm25Rank(kb, query);
+  const ranked = (semantic ? fuse(lexical, vectorRank(kb, semantic)) : lexical).slice(0, topK);
 
   const { conflictsByUnitId, byId } = kb;
   const selected = new Map<string, KnowledgeUnit>(ranked.map(({ unit }) => [unit.id, unit]));

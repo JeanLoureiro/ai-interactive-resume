@@ -3,7 +3,8 @@ import { retrieve } from "./retrieval";
 import { generate, GenerationError } from "./generation";
 import { checkCitations } from "./guard";
 import * as fallback from "./fallback";
-import { costUsd, getModel, getTopK } from "./config";
+import { costUsd, getModel, getRetrievalMode, getTopK } from "./config";
+import { semanticInput } from "./embeddings";
 import type { AssistantResponse } from "./models";
 
 export interface AskOptions {
@@ -28,7 +29,10 @@ export interface AskOptions {
 export async function ask(question: string, options: AskOptions = {}): Promise<AssistantResponse> {
   const model = options.model ?? getModel();
   const startedAt = Date.now();
-  const { units, conflicts } = retrieve(await getKnowledgeBase(), question, options.topK ?? getTopK());
+  const kb = await getKnowledgeBase();
+  const semantic = getRetrievalMode() === "hybrid" ? await semanticInput(kb, question) : undefined;
+  const { units, conflicts, ranked } = retrieve(kb, question, options.topK ?? getTopK(), semantic);
+  const rankedSourceIds = ranked.map(({ unit }) => unit.id);
 
   const base = {
     retrieved: units,
@@ -41,6 +45,7 @@ export async function ask(question: string, options: AskOptions = {}): Promise<A
       outputTokens: 0,
       costUsd: 0,
       invalidSourceIds: [] as string[],
+      rankedSourceIds,
     },
   };
 
@@ -65,6 +70,7 @@ export async function ask(question: string, options: AskOptions = {}): Promise<A
       outputTokens: result.outputTokens,
       costUsd: costUsd(result.model, result.inputTokens, result.outputTokens),
       invalidSourceIds: guard.invalidSourceIds,
+      rankedSourceIds,
     };
 
     // Order matters. The guard is checked before the model's own sufficiency flag, because a model

@@ -108,3 +108,10 @@ export function getResumeModel(): string {
 export function getAdminPassword(): string | undefined {
   return process.env["ADMIN_PASSWORD"] || undefined;
 }
+
+export type RetrievalMode = "hybrid" | "bm25";
+
+/** Hybrid by default: it met every bar in docs/evaluation.md. `bm25` turns the embedding model off. */
+export function getRetrievalMode(): RetrievalMode {
+  return process.env["RETRIEVAL_MODE"]?.trim() === "bm25" ? "bm25" : "hybrid";
+}

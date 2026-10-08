@@ -16,6 +16,8 @@ export default defineConfig({
       GITHUB_USERNAME: "JeanLoureiro",
       // Forces the JSON snapshot, so a DATABASE_URL in the developer's shell never reaches tests.
       DATABASE_URL: "",
+      // Tests never load the embedding model; hybrid ranking is tested with synthetic vectors.
+      RETRIEVAL_MODE: "bm25",
     },
   },
 });

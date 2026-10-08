@@ -52,11 +52,16 @@ honest reasons:
    and the fix is a retrieval layer — introduced exactly when the system is largest and the change
    is most expensive.
 
-**BM25, not embeddings.** A secondary decision, not the headline. At 43 units an embedding provider
-buys no measurable recall while costing a dependency, a second network call per question, and a
-second service that can be down. Interview questions are keyword-dense — "KPMG", "Storybook",
-"Supabase", "Scrum" — which is where lexical retrieval is strongest. The retriever is one module
-behind one function; swapping it is a contained change if the corpus ever justifies it.
+**BM25 and embeddings, fused.** The first version used BM25 alone, on the argument that an
+embedding provider at 43 units would cost a dependency, a network call per question and a second
+service that can be down, for no measurable recall. Two things changed that. A local model removes
+the provider: it runs in-process, needs no key, and nothing leaves the server. And measurement
+showed the recall was there: every BM25 miss in the eval was a vocabulary or meaning gap
+("certifications" against "Certificates", "chatbot" against "enterprise assistant"). With eight
+paraphrase cases committed before the code, hybrid retrieval took recall@5 from 14/23 to 18/23 and
+lost nothing BM25 found. BM25 stays in the fusion because embeddings blur exact names such as
+"KPMG" and "Storybook", which is where lexical retrieval is strongest. Numbers and method:
+`docs/evaluation.md`.
 
 ## How retrieval works, concretely
 
@@ -65,12 +70,19 @@ employer, type and body. Tokenisation lowercases, strips punctuation, drops a sm
 and does crude singularisation — not a real stemmer, which would be another dependency and another
 behaviour to explain for no measurable gain at this size.
 
-The stopword list includes `jean` and `loureiro`. Every question is about Jean, but only one unit
-spells his name, so the name had the highest IDF in the index and put that unit in the top 5 for
-14 of 15 gold-labelled eval questions. Queries are then expanded through a small symmetric synonym
-map (`certification ↔ certificate ↔ certified`, `experience ↔ year`, `lead ↔ led ↔ leading`). Each
-entry fixes a vocabulary mismatch the eval measured, not a guess, because every entry trades
-precision for recall.
+Alongside BM25, `lib/embeddings.ts` embeds every unit (title and text) and each question with
+`bge-small-en-v1.5`, a 34MB model run locally through transformers.js. Vectors are normalised, so
+similarity is a dot product, computed in memory against vectors cached with the knowledge base: no
+database query per question. Units below a similarity of 0.47 are not matches at all; calibrated on
+this corpus, where off-topic questions topped out at 0.45 and the weakest answerable one scored
+0.48. The two rankings, 20 candidates each, are merged with Reciprocal Rank Fusion
+(score = Σ 1 / (60 + rank)), which compares ranks rather than incomparable scores; ties keep BM25's
+order. `RETRIEVAL_MODE=bm25` turns the model off.
+
+The model is loaded once per server instance: about 0.8 s cold, including embedding all 43 units,
+then 2 to 4 ms per question. If it fails to load, retrieval falls back to BM25 and logs it; it never
+turns into a refusal. In production the model files ship with the function (fetched by
+`pnpm build` into `models/`) and are never downloaded at request time.
 
 Top-k defaults to 5. Then **conflict force-inclusion**: if a retrieved unit is party to a known
 disagreement (`data/conflicts.json`), the other side of that disagreement and its resolution note

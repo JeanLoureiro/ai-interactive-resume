@@ -114,5 +114,7 @@ export interface AssistantResponse {
     costUsd: number;
     /** Ids the model cited that were not in the retrieved set. Non-empty means guard_rejected. */
     invalidSourceIds: string[];
+    /** Top-k by retrieval rank alone, before conflict force-inclusion. What recall is scored on. */
+    rankedSourceIds: string[];
   };
 }

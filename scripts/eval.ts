@@ -85,7 +85,10 @@ async function main(): Promise<void> {
     const citedSourceIds = [
       ...new Set(response.claims.flatMap((claim) => claim.sources.map((s) => s.id))),
     ];
-    const rankedSourceIds = response.retrieved.map((unit) => unit.id);
+    // Recall is scored on the ranked top-k, before conflict force-inclusion, as the metric's name
+    // says. It used to be scored on everything sent to the model, which credits the conflicts data
+    // for the retriever's work.
+    const rankedSourceIds = response.diagnostics.rankedSourceIds;
 
     const result: CaseResult = {
       id: testCase.id,
@@ -95,7 +98,7 @@ async function main(): Promise<void> {
       answerText: response.answerText,
       citedSourceIds,
       rankedSourceIds,
-      retrievedSourceIds: rankedSourceIds,
+      retrievedSourceIds: response.retrieved.map((unit) => unit.id),
       conflictsSurfaced: response.conflicts.map((c) => c.id),
       invalidSourceIds: response.diagnostics.invalidSourceIds,
       checks: {

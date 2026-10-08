@@ -5,7 +5,8 @@
   "description": "A source-grounded assistant that answers interview questions about Jean Loureiro's professional background, and refuses when it cannot cite.",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "pnpm models:fetch && next build",
+    "models:fetch": "tsx scripts/fetch-models.ts",
     "start": "next start",
     "ingest": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/ingest.ts",
     "resume:preview": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/resume-preview.ts",
@@ -27,6 +28,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.127.0",
+    "@huggingface/transformers": "4.3.0",
     "drizzle-orm": "0.45.3",
     "mammoth": "1.13.0",
     "next": "16.3.5",

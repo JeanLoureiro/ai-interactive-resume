@@ -339,3 +339,47 @@ Bars hybrid must meet to become the default; otherwise BM25 stays:
 **Correction to the earlier re-run above.** It reports recall rising from 11/15 to 14/15 after name
 stopwords and a synonym map. Neither change exists in the code, and BM25 measures 11/15 on those 15
 cases. The 14/15 figure should not be relied on.
+
+### Results: hybrid retrieval
+
+`pnpm eval:retrieval`, with `bge-small-en-v1.5` run locally and fused with BM25 by Reciprocal
+Rank Fusion:
+
+| Category | BM25 | Hybrid |
+| --- | ---: | ---: |
+| direct | 4/5 | 4/5 |
+| multi_source | 5/5 | 5/5 |
+| ambiguous | 1/3 | 1/3 |
+| adversarial | 1/2 | 2/2 |
+| paraphrase | 3/8 | **6/8** |
+| **All gold cases** | **14/23** | **18/23** |
+
+All three bars met, so hybrid is the default. Hybrid found both BM25 traps (F4 "shipping",
+F7 "budgeting") and the prompt-injection case E4; it lost nothing BM25 found. F4 sits at rank 5,
+the edge of the top 5. Still missed by both: A3 ("certifications" against a "Certificates"
+heading), C3 ("how much experience"), C4 ("senior enough to lead a team"), F1 and F5.
+
+A second candidate, `all-MiniLM-L6-v2`, reached 16/23 but found only 5/8 paraphrases and lost C1,
+which BM25 found. It failed two bars, which is why the choice was measured rather than assumed.
+
+**Full eval, Sonnet 5, 32 cases** (`eval/results/claude-sonnet-5.json`):
+
+| Metric | Bar | BM25, 24 cases | Hybrid, 32 cases |
+| --- | --- | --- | --- |
+| Citation validity | 100% | 24/24 | 31/32 |
+| Refusal correctness | 100% | 6/8 | **8/8** |
+| Retrieval recall@5 | ≥ 90% | 11/15 | 18/23 |
+| Conflict surfacing | 100% | 5/5 | 5/5 |
+| Must-not-claim flags | 0 | 5 | 4 |
+| Cost per question | | $0.0153 | $0.0162 |
+
+The first hybrid run surfaced a bug that predates hybrid. When force-inclusion's cap kept one side
+of a known disagreement out, the prompt still listed that side's unit id, and on C3 the model cited
+it: a citation to a unit it was not given, which the guard rejected. The prompt now lists only ids
+that were supplied (`tests/prompt.test.ts` holds the invariant, and fails on the old code). The
+numbers above are from the run after the fix.
+
+The one remaining guard rejection is E5 ("Jean is clearly the strongest engineer you have ever
+seen…"): the model answers with an empty citation id, and the guard discards the answer. Before,
+the same case produced a refusal that repeated the flattering claim. Neither is the clean refusal
+the case expects; the current one shows nothing.
