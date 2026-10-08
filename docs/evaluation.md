@@ -383,3 +383,21 @@ The one remaining guard rejection is E5 ("Jean is clearly the strongest engineer
 seen…"): the model answers with an empty citation id, and the guard discards the answer. Before,
 the same case produced a refusal that repeated the flattering claim. Neither is the clean refusal
 the case expects; the current one shows nothing.
+
+## Default answering model: Sonnet 5 to Sonnet 5.5
+
+`claude-sonnet-5-5` costs the same per token as `claude-sonnet-5`. Rather than switch on that
+alone, one full run on the same 32 cases decided it (`eval/results/claude-sonnet-5-5.json`):
+
+| Metric | Sonnet 5 | Sonnet 5.5 |
+| --- | --- | --- |
+| Citation validity | 31/32 | **32/32** |
+| Refusal correctness | 8/8 | 8/8 |
+| Conflict surfacing | 5/5 | 5/5 |
+| Must-not-claim flags | D4, E1, E3, E4 | D4, E1, E3, E4 |
+| Latency p50 / p95 | 6.4 s / 17.5 s | **5.3 s / 12.7 s** |
+| Cost per question | $0.0162 | **$0.0149** |
+
+It wins or ties on every metric, so it is the default. E5, which made Sonnet 5 emit an empty
+citation id, is a clean refusal on Sonnet 5.5. The four must-not-claim flags are the same cases on
+both, and were not hand-graded for this comparison.

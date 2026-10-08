@@ -40,3 +40,16 @@ export class GenerationError extends Error {
     this.failure = failure;
   }
 }
+
+/**
+ * The provider rejected the request itself: bad key, no access, unknown model, or a request shape it
+ * does not accept. Not retried, and deliberately not a GenerationError: it surfaces as a loud
+ * "misconfigured" error rather than "the model is unavailable, try again", because retrying a
+ * revoked key never works and a visitor should not be told it might.
+ */
+export class LlmConfigurationError extends Error {
+  constructor(message: string, options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = "LlmConfigurationError";
+  }
+}

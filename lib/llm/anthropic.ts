@@ -1,11 +1,14 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import { GenerationError, type LlmProvider, type StructuredRequest, type StructuredResult } from "./types";
+import { GenerationError, LlmConfigurationError, type LlmProvider, type StructuredRequest, type StructuredResult } from "./types";
 
-export function createAnthropicProvider(apiKey: string): LlmProvider {
+/** The slice of the SDK client this adapter uses, so tests can inject a fake. */
+type MessagesClient = Pick<Anthropic, "messages">;
+
+export function createAnthropicProvider(apiKey: string, injected?: MessagesClient): LlmProvider {
   // Two retries on 429/5xx/connection errors is the SDK default and is left in place: a transient
   // blip should not surface to the user as a refusal, because a refusal reads as "no such fact".
-  const client = new Anthropic({ apiKey, timeout: 60_000 });
+  const client = injected ?? new Anthropic({ apiKey, timeout: 60_000 });
 
   return {
     name: "anthropic",
@@ -23,6 +26,18 @@ export function createAnthropicProvider(apiKey: string): LlmProvider {
           output_config: { format: zodOutputFormat(request.schema) },
         });
       } catch (error) {
+        // Bad key, no access, unknown model, malformed request: retrying cannot fix these.
+        if (
+          error instanceof Anthropic.BadRequestError ||
+          error instanceof Anthropic.AuthenticationError ||
+          error instanceof Anthropic.PermissionDeniedError ||
+          error instanceof Anthropic.NotFoundError
+        ) {
+          throw new LlmConfigurationError(
+            `Anthropic rejected the request (HTTP ${error.status}). Check LLM_API_KEY and LLM_MODEL. ${error.message}`,
+            { cause: error },
+          );
+        }
         throw new GenerationError(
           { kind: "provider_unavailable", message: error instanceof Error ? error.message : String(error) },
           { cause: error },

@@ -156,7 +156,11 @@ further than it deserves.
 
 ## Model choice, and what would change it
 
-Default **`claude-sonnet-5`** ($2 / $10 per MTok). The task is narrow — grounded extraction and
+Default **`claude-sonnet-5-5`** ($2 / $10 per MTok), since phase 5. It replaced `claude-sonnet-5`
+at the same price after one eval run on the same 32 cases: citation validity 32/32 against 31/32,
+refusals 8/8 on both, p50 latency 5.3 s against 6.4 s, and a lower cost per question. Its thinking
+is on by default; here that did not cost more, but it is the first thing to check if latency
+regresses. The original reasoning still holds. The task is narrow: grounded extraction and
 synthesis over a handful of short units, with strict instruction-following on refusal and citation
 discipline. That does not need frontier reasoning, and Opus-tier cost is not justified by anything
 measured.

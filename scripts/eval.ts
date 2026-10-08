@@ -15,7 +15,7 @@ import path from "node:path";
 import { z } from "zod";
 import { ask } from "../lib/pipeline";
 import { closeDb } from "../lib/db/client";
-import { DEFAULT_MODEL, isPricedModel } from "../lib/config";
+import { getModel, isPricedModel } from "../lib/config";
 import { loadDataset, type EvalCase } from "./dataset";
 
 
@@ -62,7 +62,7 @@ function pct(numerator: number, denominator: number): string {
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const modelIndex = args.indexOf("--model");
-  const model = modelIndex >= 0 ? args[modelIndex + 1] : DEFAULT_MODEL;
+  const model = modelIndex >= 0 ? args[modelIndex + 1] : getModel();
   const limitIndex = args.indexOf("--limit");
   const limit = limitIndex >= 0 ? Number.parseInt(args[limitIndex + 1] ?? "", 10) : Number.NaN;
 

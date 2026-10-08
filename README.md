@@ -81,6 +81,23 @@ failed logins are throttled per server instance, not globally.
 The page is prerendered, so after changing `.env` restart `pnpm dev` or rebuild. The eval set in
 `eval/dataset.jsonl` is Jean-specific too. Treat it as an example of how to write your own.
 
+## Use any provider
+
+Answers and resume structuring go through one small interface (`lib/llm/`), with two adapters:
+Anthropic, and anything that speaks OpenAI's Chat Completions format. Set four variables:
+
+| Provider | `LLM_PROVIDER` | `LLM_BASE_URL` | `LLM_STRUCTURED_OUTPUT` | Verified |
+| --- | --- | --- | --- | --- |
+| Anthropic (default) | `anthropic` | | | full eval, committed |
+| OpenAI | `openai-compatible` | `https://api.openai.com/v1` | `json_schema` | pending |
+| DeepSeek | `openai-compatible` | `https://api.deepseek.com` | `json_object` | pending |
+| Gemini, Groq, OpenRouter, Ollama | `openai-compatible` | the provider's `/v1` URL | depends on the model | untested |
+
+Plus `LLM_API_KEY` and `LLM_MODEL`. Whatever the provider, every reply is validated against the
+same schema and the citation guard is the same, so a provider that returns malformed output fails
+closed to a template, never to an unchecked answer. A bad key or unknown model is reported as a
+configuration error rather than "try again later".
+
 ## What it knows
 
 43 knowledge units in `data/knowledge-units.json`, committed. Read that file and you know exactly

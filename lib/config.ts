@@ -5,14 +5,22 @@ import { z } from "zod";
  *  estimate, so this only ever multiplies tokens the API actually reported. */
 const PRICING: Record<string, { input: number; output: number }> = {
   "claude-sonnet-5": { input: 2, output: 10 },
+  "claude-sonnet-5-5": { input: 2, output: 10 },
   "claude-haiku-4-5": { input: 1, output: 5 },
   "claude-opus-5": { input: 5, output: 25 },
 };
 
-export const DEFAULT_MODEL = "claude-sonnet-5";
+export const DEFAULT_MODEL = "claude-sonnet-5-5";
+
+/** LLM_PRICE_INPUT / LLM_PRICE_OUTPUT (USD per million tokens) price any model, e.g. a non-Anthropic one. */
+function configuredPrice(): { input: number; output: number } | undefined {
+  const input = Number.parseFloat(process.env["LLM_PRICE_INPUT"] ?? "");
+  const output = Number.parseFloat(process.env["LLM_PRICE_OUTPUT"] ?? "");
+  return Number.isFinite(input) && Number.isFinite(output) ? { input, output } : undefined;
+}
 
 export function costUsd(model: string, inputTokens: number, outputTokens: number): number {
-  const rates = PRICING[model];
+  const rates = configuredPrice() ?? PRICING[model];
   // An unknown model returns 0 rather than guessing a price. A fabricated cost figure in a report
   // about a system built to not fabricate would be a poor look, and a zero is obviously wrong.
   if (!rates) return 0;
@@ -20,11 +28,56 @@ export function costUsd(model: string, inputTokens: number, outputTokens: number
 }
 
 export function isPricedModel(model: string): boolean {
-  return model in PRICING;
+  return configuredPrice() !== undefined || model in PRICING;
 }
 
+const env = (name: string) => process.env[name]?.trim() || undefined;
+
+export type LlmProviderName = "anthropic" | "openai-compatible";
+
+export interface LlmConfig {
+  provider: LlmProviderName;
+  apiKey: string;
+  /** openai-compatible only: e.g. https://api.openai.com/v1, without a trailing slash. */
+  baseUrl?: string;
+  /** openai-compatible only: json_schema where the provider supports it, json_object otherwise. */
+  structuredOutput?: "json_schema" | "json_object";
+}
+
+/**
+ * Which LLM answers. Anthropic by default; any OpenAI-compatible API (OpenAI, DeepSeek, Gemini,
+ * Groq, OpenRouter, Ollama) with LLM_PROVIDER=openai-compatible. ANTHROPIC_API_KEY keeps working for
+ * Anthropic, so an existing .env does not break. Every missing value is named in the error.
+ */
+export function getLlmConfig(): LlmConfig {
+  const provider = env("LLM_PROVIDER") ?? "anthropic";
+  if (provider !== "anthropic" && provider !== "openai-compatible") {
+    throw new Error(`LLM_PROVIDER must be "anthropic" or "openai-compatible", not "${provider}".`);
+  }
+  const apiKey = env("LLM_API_KEY") ?? (provider === "anthropic" ? env("ANTHROPIC_API_KEY") : undefined);
+  if (!apiKey) {
+    throw new Error("LLM_API_KEY is not set. Add your provider's API key to .env; see the README.");
+  }
+  if (provider === "anthropic") return { provider, apiKey };
+
+  const baseUrl = env("LLM_BASE_URL")?.replace(/\/+$/, "");
+  if (!baseUrl) throw new Error("LLM_BASE_URL is not set. openai-compatible needs the provider's API URL; see the README.");
+  const structuredOutput = env("LLM_STRUCTURED_OUTPUT") ?? "json_schema";
+  if (structuredOutput !== "json_schema" && structuredOutput !== "json_object") {
+    throw new Error(`LLM_STRUCTURED_OUTPUT must be "json_schema" or "json_object", not "${structuredOutput}".`);
+  }
+  return { provider, apiKey, baseUrl, structuredOutput };
+}
+
+/**
+ * The answering model. Defaults to claude-sonnet-5-5 on Anthropic, chosen by eval (see
+ * docs/evaluation.md); required for any other provider.
+ */
 export function getModel(): string {
-  return process.env["ANTHROPIC_MODEL"] || DEFAULT_MODEL;
+  const model = env("LLM_MODEL") ?? env("ANTHROPIC_MODEL");
+  if (model) return model;
+  if ((env("LLM_PROVIDER") ?? "anthropic") === "anthropic") return DEFAULT_MODEL;
+  throw new Error("LLM_MODEL is not set. Name the model to use with your provider, e.g. gpt-5-mini.");
 }
 
 export function getTopK(): number {
@@ -33,15 +86,6 @@ export function getTopK(): number {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 5;
 }
 
-export function getApiKey(): string {
-  const key = process.env["ANTHROPIC_API_KEY"];
-  if (!key) {
-    throw new Error(
-      "ANTHROPIC_API_KEY is not set. Copy .env.example to .env.local and add your key — see the README.",
-    );
-  }
-  return key;
-}
 
 /** Blank env values count as unset, so `GITHUB_USERNAME=` in a copied .env disables the source. */
 const optional = (schema: z.ZodString) =>
@@ -99,9 +143,12 @@ export function describeSources(subject: Subject): string {
  * Model that splits a PDF or DOCX resume into entries. Separate from the answering model because the
  * task is copying, not reasoning: measured on a real resume, Haiku kept the same 23 units as Sonnet
  * with nothing dropped by the guard, in 31 s instead of about 2 minutes, at a sixth of the cost.
+ * On another provider it defaults to the answering model, since a Claude model id would not exist there.
  */
 export function getResumeModel(): string {
-  return process.env["RESUME_MODEL"]?.trim() || "claude-haiku-4-5";
+  const configured = env("RESUME_MODEL");
+  if (configured) return configured;
+  return (env("LLM_PROVIDER") ?? "anthropic") === "anthropic" ? "claude-haiku-4-5" : getModel();
 }
 
 /** Blank or unset means /admin does not exist. */
