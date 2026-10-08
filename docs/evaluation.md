@@ -309,3 +309,33 @@ changed to 60, and one swapped word in an otherwise real sentence.
 
 Wall time matters for the upload page: two minutes is inside Vercel's 300-second default, but the
 page has to say that it is working.
+
+## Hybrid retrieval: cases and bars, committed before the code
+
+Phase 4 adds meaning-based search next to BM25. Before any of that code existed, eight paraphrase
+cases (F1 to F8, category `paraphrase`) were added to `eval/dataset.jsonl`. Each asks for a fact in
+words the answering unit does not use. Two are traps for BM25 specifically: F4 asks about "shipping",
+a word the summary uses for something else, and F7 asks about "budgeting", a domain of an unrelated
+platform.
+
+`pnpm eval:retrieval` scores recall@5 on the ranked top 5, before conflict force-inclusion, with no
+model call. BM25 baseline, measured when the cases were committed:
+
+| Category | BM25 recall@5 |
+| --- | ---: |
+| direct | 4/5 |
+| multi_source | 5/5 |
+| ambiguous | 1/3 |
+| adversarial | 1/2 |
+| paraphrase | 3/8 |
+| **All gold cases** | **14/23** |
+
+Bars hybrid must meet to become the default; otherwise BM25 stays:
+
+1. Recall@5 on all gold cases at least BM25's.
+2. At least 6 of the 8 paraphrase cases found.
+3. No case that BM25 finds is lost.
+
+**Correction to the earlier re-run above.** It reports recall rising from 11/15 to 14/15 after name
+stopwords and a synonym map. Neither change exists in the code, and BM25 measures 11/15 on those 15
+cases. The 14/15 figure should not be relied on.

@@ -16,19 +16,8 @@ import { z } from "zod";
 import { ask } from "../lib/pipeline";
 import { closeDb } from "../lib/db/client";
 import { DEFAULT_MODEL, isPricedModel } from "../lib/config";
+import { loadDataset, type EvalCase } from "./dataset";
 
-const CaseSchema = z.object({
-  id: z.string(),
-  category: z.enum(["direct", "multi_source", "ambiguous", "unanswerable", "adversarial"]),
-  question: z.string(),
-  goldSourceIds: z.array(z.string()),
-  mustContain: z.array(z.string()),
-  mustNotClaim: z.array(z.string()),
-  expectsRefusal: z.boolean(),
-  expectsConflict: z.string().nullable(),
-  note: z.string(),
-});
-type EvalCase = z.infer<typeof CaseSchema>;
 
 interface CaseResult {
   id: string;
@@ -82,11 +71,7 @@ async function main(): Promise<void> {
     console.warn(`! ${model} has no price in lib/config.ts, so cost will report as $0.00000.\n`);
   }
 
-  const raw = await readFile(path.join(process.cwd(), "eval", "dataset.jsonl"), "utf8");
-  const allCases = raw
-    .split("\n")
-    .filter((line) => line.trim().length > 0)
-    .map((line) => CaseSchema.parse(JSON.parse(line)));
+  const allCases = await loadDataset();
   const cases = Number.isFinite(limit) ? allCases.slice(0, limit) : allCases;
 
   console.log(`Running ${cases.length} cases against ${model}\n`);

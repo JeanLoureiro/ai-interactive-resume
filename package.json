@@ -13,6 +13,7 @@
     "db:generate": "drizzle-kit generate",
     "db:setup": "pnpm db:migrate && pnpm ingest",
     "eval": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/eval.ts",
+    "eval:retrieval": "tsx scripts/eval-retrieval.ts",
     "ask": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/ask.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
