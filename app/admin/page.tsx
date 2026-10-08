@@ -7,6 +7,7 @@ import { getDb, isDatabaseConfigured } from "@/lib/db/client";
 import { createPostgresKnowledgeStore } from "@/lib/db/knowledge-store";
 import { buildKnowledgeBase } from "@/lib/knowledge";
 import { listSuggestions } from "@/lib/memory";
+import { getAccessMode, listInvites } from "@/lib/access";
 import { AdminDashboard } from "./admin-dashboard";
 import { AdminLogin } from "./admin-login";
 import styles from "./admin.module.css";
@@ -32,10 +33,11 @@ export default async function AdminPage() {
   }
 
   const db = getDb();
-  const [draft, live, suggestions] = await Promise.all([
+  const [draft, live, suggestions, invites] = await Promise.all([
     getDraft(db),
     createPostgresKnowledgeStore(db).load().then(buildKnowledgeBase),
     listSuggestions(db, { approvedOnly: false }),
+    listInvites(db),
   ]);
   const liveCv = live.units.filter((unit) => unit.source === "cv");
 
@@ -43,6 +45,8 @@ export default async function AdminPage() {
     <AdminDashboard
       liveCvCount={liveCv.length}
       suggestions={suggestions}
+      invites={invites}
+      inviteOnly={getAccessMode() === "invite"}
       draft={
         draft && {
           fileName: draft.fileName,

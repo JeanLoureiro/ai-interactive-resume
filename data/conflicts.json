@@ -1,26 +1,33 @@
 [
   {
-    "id": "employment-status-stale-on-linkedin",
-    "kind": "stale",
-    "unitIds": ["cv:kpmg-manager-senior-software-engineer", "linkedin:current-employer"],
-    "resolutionNote": "The two sources disagree about whether the KPMG role is current. The CV gives it an end date of 2026-08; the public LinkedIn profile shows KPMG with no end date, which LinkedIn renders as the current position. The CV is the more recently maintained source and is treated as correct: the KPMG role ended in August 2026. LinkedIn is stale. When a question turns on where Jean works now, say plainly that the sources disagree, give the CV's answer, and name LinkedIn as the stale one rather than silently picking a side."
-  },
-  {
     "id": "job-title-differs-between-sources",
     "kind": "contradiction",
-    "unitIds": ["cv:profile", "linkedin:profile"],
-    "resolutionNote": "The CV titles Jean 'Senior AI Engineer'. The public LinkedIn headline reads 'Senior Software Engineer working at the intersection of frontend systems and…' (LinkedIn truncates it). These are self-described titles from different points in time, not a contradiction about a fact someone else awarded. Report both and attribute each to its source; do not present either as the single official title."
+    "unitIds": [
+      "cv:profile",
+      "linkedin:profile"
+    ],
+    "summary": "The CV titles Jean \"Senior AI Engineer\"; the LinkedIn headline says \"Senior software engineer\". Both are self-descriptions, from different times.",
+    "resolutionNote": "The CV titles Jean 'Senior AI Engineer'. The public LinkedIn headline reads 'Senior software engineer with 15+ years shipping production web applications, now…' (LinkedIn truncates it). These are self-described titles from different points in time, not a contradiction about a fact someone else awarded. Report both and attribute each to its source; do not present either as the single official title."
   },
   {
     "id": "education-absent-from-cv",
     "kind": "gap",
-    "unitIds": ["linkedin:education-the-university-of-queensland", "cv:profile"],
+    "unitIds": [
+      "linkedin:education-the-university-of-queensland",
+      "cv:profile"
+    ],
+    "summary": "Only LinkedIn records education (The University of Queensland, 2015 to 2017). The CV has no education section, and no degree is stated anywhere.",
     "resolutionNote": "The CV has no education section at all. The only record of education is the public LinkedIn profile, which lists The University of Queensland, 2015-2017, with no degree or field of study shown. Answer education questions from LinkedIn, say that the CV does not cover education, and do not state a degree, qualification or field of study — none is recorded in any source."
   },
   {
     "id": "certifications-differ-between-sources",
     "kind": "gap",
-    "unitIds": ["cv:scrum-master", "cv:kanban-management-professional-i", "linkedin:masking-limitation"],
+    "unitIds": [
+      "cv:scrum-master",
+      "cv:kanban-management-professional-i",
+      "linkedin:masking-limitation"
+    ],
+    "summary": "The CV lists two certificates. LinkedIn hides certifications from logged-out visitors, so the two cannot be compared.",
     "resolutionNote": "The CV lists two certificates: Scrum Master (scrum.org) and KMP I, Kanban System Design. LinkedIn's certification section is not readable from the logged-out profile, so it can neither confirm nor add to this list. Treat the CV list as the complete known set and do not claim any certification outside it."
   },
   {
@@ -33,7 +40,8 @@
       "cv:financial-sanity",
       "cv:the-clubhouse-poker"
     ],
-    "resolutionNote": "The CV describes four current projects. The public GitHub profile contains none of them — it holds 15 repositories last updated between 2014 and 2023, mostly course follow-alongs and forks. The projects are in private repositories and Jean's stated position is that they can be shared on request. When asked to see code or to verify a project, say what the public profile actually contains, say that it is not a representation of current work, and offer the private-on-request route. Do not imply the projects are unverified or doubtful, and do not imply the public repositories are recent or representative."
+    "summary": "The CV's projects are in private repositories, so the public GitHub profile does not show them.",
+    "resolutionNote": "The CV describes four current projects. None of them is in the public GitHub profile: they, and client work, are in private repositories, and Jean's stated position is that they can be shared on request. The public profile's older repositories (2014 to 2023) are mostly course follow-alongs and forks; the recent ones (2026) are Jean's own AI projects. When asked to see code or to verify a project, say what the public profile actually contains, distinguish the older learning repositories from the recent ones, and offer the private-on-request route for the CV projects. Do not imply the CV projects are unverified or doubtful."
   },
   {
     "id": "projects-overlap-full-time-employment",
@@ -44,6 +52,7 @@
       "cv:financial-sanity",
       "cv:pohly-private-wealth-client-portal"
     ],
+    "summary": "Some projects ran alongside the full-time KPMG role. That is concurrent side work, not an error in the record.",
     "resolutionNote": "Several project date ranges overlap the full-time KPMG role, which ran to 2026-08: The Clubhouse Poker from 2024-11, Financial Sanity from 2025-01, Pohly from 2025-11. This is concurrent independent and side work alongside full-time employment, which is normal and not a contradiction in the record. Explain the overlap as side work, cite both the employment unit and the project units, and do not treat it as an error, do not refuse to answer, and do not revise the KPMG end date to make the ranges disjoint."
   }
 ]

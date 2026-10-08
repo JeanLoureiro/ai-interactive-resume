@@ -29,6 +29,8 @@ export const conflicts = pgTable("conflicts", {
   id: text("id").primaryKey(),
   kind: text("kind").notNull(),
   unitIds: text("unit_ids").array().notNull(),
+  /** Visitor-facing; the resolution note is model-facing. */
+  summary: text("summary").notNull().default(""),
   resolutionNote: text("resolution_note").notNull(),
   /** File order; it decides the order disagreements appear in the prompt. */
   position: integer("position").notNull(),
@@ -52,6 +54,8 @@ export const knowledgeDrafts = pgTable("knowledge_drafts", {
 /** One anonymous visitor conversation, identified only by a random id in an httpOnly cookie. */
 export const conversations = pgTable("conversations", {
   id: text("id").primaryKey(),
+  /** The invite the visitor used, so the owner can see which recruiter asked what. Null for the owner. */
+  inviteId: text("invite_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -105,3 +109,20 @@ export const rateLimits = pgTable(
   },
   (table) => [primaryKey({ columns: [table.key, table.windowStart] })],
 );
+
+/**
+ * Invitations to use the assistant, created by the owner in /admin. Only a hash of the code is
+ * stored, so a database leak does not leak working codes. An invite lasts 24 hours from first use;
+ * one never used expires 14 days after it was created.
+ */
+export const invites = pgTable("invites", {
+  id: text("id").primaryKey(),
+  /** The owner's own reminder, e.g. "Acme recruiter". Never shown to visitors. */
+  label: text("label").notNull(),
+  codeHash: text("code_hash").notNull().unique(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  activatedAt: timestamp("activated_at", { withTimezone: true }),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  questionsAsked: integer("questions_asked").notNull().default(0),
+});

@@ -72,7 +72,7 @@ function ResponseView({ response }: { response: AssistantResponse }) {
           {relevantConflicts.map((conflict) => (
             <div key={conflict.id} className={styles.conflict}>
               <span className={styles.kind}>{conflict.kind}</span>
-              <p>{conflict.resolutionNote}</p>
+              <p>{conflict.summary}</p>
             </div>
           ))}
         </div>
@@ -130,6 +130,81 @@ interface Turn {
   response: AssistantResponse;
 }
 
+interface Status {
+  mode: "invite" | "public";
+  access: boolean;
+  /** False on a fresh deployment whose database has no resume yet. */
+  ready: boolean;
+  requestAccessUrl: string | null;
+}
+
+/** Shown instead of the chat when the site is invite-only and this browser has no valid invite. */
+function Gate({
+  subjectName,
+  requestAccessUrl,
+  onAccess,
+}: {
+  subjectName: string;
+  requestAccessUrl: string | null;
+  onAccess: () => void;
+}) {
+  const [code, setCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  async function redeem() {
+    setPending(true);
+    setError(null);
+    const res = await fetch("/api/access", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ code }),
+    }).catch(() => null);
+    setPending(false);
+    if (res?.ok) return onAccess();
+    setError((await res?.json().catch(() => null))?.error ?? "Could not reach the assistant.");
+  }
+
+  return (
+    <section className={styles.gate}>
+      <p>
+        This assistant answers questions about {subjectName}&apos;s background by invitation. Enter
+        the code you were sent.
+      </p>
+      <form
+        className={styles.form}
+        onSubmit={(event) => {
+          event.preventDefault();
+          void redeem();
+        }}
+      >
+        <input
+          className={styles.input}
+          value={code}
+          onChange={(event) => setCode(event.target.value)}
+          placeholder="e.g. K7Q2-9XMP"
+          aria-label="Invite code"
+          autoComplete="one-time-code"
+          maxLength={32}
+        />
+        <button className={styles.button} type="submit" disabled={pending || code.trim().length < 4}>
+          {pending ? "Checking…" : "Continue"}
+        </button>
+      </form>
+      {error && <p className={styles.error}>{error}</p>}
+      {requestAccessUrl && (
+        <p className={styles.notice}>
+          No code?{" "}
+          <a className={styles.link} href={requestAccessUrl} target="_blank" rel="noreferrer">
+            Request access from {subjectName} on LinkedIn
+          </a>
+          .
+        </p>
+      )}
+    </section>
+  );
+}
+
 export function AskForm({ subjectName, sources, suggestions: defaultSuggestions }: AskFormProps) {
   const [question, setQuestion] = useState("");
   const [turns, setTurns] = useState<Turn[]>([]);
@@ -137,11 +212,38 @@ export function AskForm({ subjectName, sources, suggestions: defaultSuggestions 
   const [error, setError] = useState<string | null>(null);
   const [memory, setMemory] = useState<{ enabled: boolean; retentionDays?: number }>({ enabled: false });
   const [suggestions, setSuggestions] = useState(defaultSuggestions);
+  const [status, setStatus] = useState<Status | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
-  // The page is prerendered, so the visitor's thread and the approved suggestions load here. Both
-  // fail quietly: without them the page still works as a single-question assistant.
+  // The page is prerendered, so who this visitor is (invited, owner, nobody) is decided here. An
+  // invite link carries ?code=; it is redeemed once and removed from the address bar, so it does not
+  // linger in history or screenshots.
+  async function loadStatus() {
+    const code = new URLSearchParams(window.location.search).get("code");
+    if (code) {
+      window.history.replaceState(null, "", window.location.pathname);
+      await fetch("/api/access", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ code }),
+      }).catch(() => undefined);
+    }
+    const res = await fetch("/api/status").catch(() => null);
+    setStatus(
+      res?.ok
+        ? ((await res.json()) as Status)
+        : { mode: "public", access: true, ready: true, requestAccessUrl: null },
+    );
+  }
+
   useEffect(() => {
+    void loadStatus();
+  }, []);
+
+  // The visitor's thread and the approved suggestions, once they have access. Both fail quietly:
+  // without them the page still works as a single-question assistant.
+  useEffect(() => {
+    if (!status?.access || !status.ready) return;
     void fetch("/api/conversation")
       .then((res) => (res.ok ? res.json() : null))
       .then((body: { memory: boolean; retentionDays?: number; turns: Turn[] } | null) => {
@@ -156,7 +258,7 @@ export function AskForm({ subjectName, sources, suggestions: defaultSuggestions 
         if (body?.suggestions.length) setSuggestions(body.suggestions);
       })
       .catch(() => undefined);
-  }, []);
+  }, [status?.access, status?.ready]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -175,7 +277,11 @@ export function AskForm({ subjectName, sources, suggestions: defaultSuggestions 
         body: JSON.stringify({ question: trimmed }),
       });
       const body = await res.json();
-      if (!res.ok) {
+      if (res.status === 401 && body.gate) {
+        // The invite expired or was revoked while the page was open.
+        setStatus((current) => (current ? { ...current, access: false } : current));
+        setQuestion(trimmed);
+      } else if (!res.ok) {
         setError(body.error ?? "Something went wrong.");
         setQuestion(trimmed);
       } else {
@@ -207,73 +313,99 @@ export function AskForm({ subjectName, sources, suggestions: defaultSuggestions 
         </p>
       </header>
 
-      {turns.length === 0 && (
-        <div className={styles.suggestions}>
-          {suggestions.map((suggestion) => (
-            <button
-              key={suggestion}
-              type="button"
-              className={styles.chip}
-              disabled={asking !== null}
-              onClick={() => void submit(suggestion)}
-            >
-              {suggestion}
-            </button>
-          ))}
-        </div>
+      {!status && <p className={styles.notice}>Loading…</p>}
+
+      {status && !status.ready && (
+        <section className={styles.gate}>
+          <p>
+            No resume has been added yet. If this is your deployment, sign in at{" "}
+            <a className={styles.link} href="/admin">
+              /admin
+            </a>{" "}
+            and upload one.
+          </p>
+        </section>
       )}
 
-      <div className={styles.thread} aria-live="polite">
-        {turns.map((turn, index) => (
-          <div key={index} className={styles.turn}>
-            <p className={styles.question}>{turn.question}</p>
-            <ResponseView response={turn.response} />
-          </div>
-        ))}
-        {asking && (
-          <div className={styles.turn}>
-            <p className={styles.question}>{asking}</p>
-            <p className={styles.thinking}>Finding sources and checking every claim…</p>
-          </div>
-        )}
-        <div ref={endRef} />
-      </div>
-
-      {error && <p className={styles.error}>{error}</p>}
-
-      <form
-        className={styles.form}
-        onSubmit={(event) => {
-          event.preventDefault();
-          void submit(question);
-        }}
-      >
-        <input
-          className={styles.input}
-          value={question}
-          onChange={(event) => setQuestion(event.target.value)}
-          placeholder={turns.length > 0 && memory.enabled ? "Ask a follow-up…" : `What has ${subjectName} built?`}
-          aria-label="Your question"
-          maxLength={2000}
+      {status?.ready && !status.access && (
+        <Gate
+          subjectName={subjectName}
+          requestAccessUrl={status.requestAccessUrl}
+          onAccess={() => void loadStatus()}
         />
-        <button className={styles.button} type="submit" disabled={asking !== null || !question.trim()}>
-          {asking ? "Asking…" : "Ask"}
-        </button>
-      </form>
+      )}
 
-      <p className={styles.notice}>
-        {memory.enabled
-          ? `Questions are stored for up to ${memory.retentionDays ?? 90} days to improve this assistant.`
-          : "Each question is answered on its own."}
-        {memory.enabled && turns.length > 0 && (
-          <>
-            {" "}
-            <button type="button" className={styles.linkButton} onClick={() => void newConversation()}>
-              New conversation
+      {status?.ready && status.access && (
+        <>
+          {turns.length === 0 && (
+            <div className={styles.suggestions}>
+              {suggestions.map((suggestion) => (
+                <button
+                  key={suggestion}
+                  type="button"
+                  className={styles.chip}
+                  disabled={asking !== null}
+                  onClick={() => void submit(suggestion)}
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className={styles.thread} aria-live="polite">
+            {turns.map((turn, index) => (
+              <div key={index} className={styles.turn}>
+                <p className={styles.question}>{turn.question}</p>
+                <ResponseView response={turn.response} />
+              </div>
+            ))}
+            {asking && (
+              <div className={styles.turn}>
+                <p className={styles.question}>{asking}</p>
+                <p className={styles.thinking}>Finding sources and checking every claim…</p>
+              </div>
+            )}
+            <div ref={endRef} />
+          </div>
+
+          {error && <p className={styles.error}>{error}</p>}
+
+          <form
+            className={styles.form}
+            onSubmit={(event) => {
+              event.preventDefault();
+              void submit(question);
+            }}
+          >
+            <input
+              className={styles.input}
+              value={question}
+              onChange={(event) => setQuestion(event.target.value)}
+              placeholder={turns.length > 0 && memory.enabled ? "Ask a follow-up…" : `What has ${subjectName} built?`}
+              aria-label="Your question"
+              maxLength={2000}
+            />
+            <button className={styles.button} type="submit" disabled={asking !== null || !question.trim()}>
+              {asking ? "Asking…" : "Ask"}
             </button>
-          </>
-        )}
-      </p>
+          </form>
+
+          <p className={styles.notice}>
+            {memory.enabled
+              ? `Questions are stored for up to ${memory.retentionDays ?? 90} days to improve this assistant.`
+              : "Each question is answered on its own."}
+            {memory.enabled && turns.length > 0 && (
+              <>
+                {" "}
+                <button type="button" className={styles.linkButton} onClick={() => void newConversation()}>
+                  New conversation
+                </button>
+              </>
+            )}
+          </p>
+        </>
+      )}
     </main>
   );
 }

@@ -27,11 +27,12 @@ describe("conflict force-inclusion", () => {
   // put both sides of the stale-LinkedIn disagreement in front of the model, even though only one
   // side matched the query.
   it("pulls in the other side of a disagreement and the note", () => {
-    const result = retrieve(kb, "Where does Jean work now?");
+    // Education is recorded only on LinkedIn; the CV side of that gap must come along with it.
+    const result = retrieve(kb, "Which university did Jean attend?");
     const ids = result.units.map((u) => u.id);
-    expect(ids).toContain("cv:kpmg-manager-senior-software-engineer");
-    expect(ids).toContain("linkedin:current-employer");
-    expect(result.conflicts.map((c) => c.id)).toContain("employment-status-stale-on-linkedin");
+    expect(ids).toContain("linkedin:education-the-university-of-queensland");
+    expect(ids).toContain("cv:profile");
+    expect(result.conflicts.map((c) => c.id)).toContain("education-absent-from-cv");
   });
 
   it("caps how many units force-inclusion can add", () => {

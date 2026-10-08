@@ -97,6 +97,16 @@ export const createLinkedinAdapter = (profileUrl: string): SourceAdapter => ({
     const employer = (person.worksFor ?? [])
       .map((entry) => clean((entry as { name?: unknown } | null)?.name))
       .find((name): name is string => Boolean(name));
+    if (!employer && (person.worksFor ?? []).length === 0) {
+      units.push({
+        id: "linkedin:no-current-employer",
+        source: "linkedin",
+        unitType: "profile",
+        title: "No current employer on the public LinkedIn profile",
+        text: `The public LinkedIn profile shows no current employer: every listed organisation is a past one. Retrieved ${retrievedAt}.`,
+        retrievedAt,
+      });
+    }
     if (employer) {
       units.push({
         id: "linkedin:current-employer",
@@ -110,9 +120,24 @@ export const createLinkedinAdapter = (profileUrl: string): SourceAdapter => ({
     }
 
     for (const entry of person.alumniOf ?? []) {
-      const record = entry as { name?: unknown; member?: { startDate?: unknown; endDate?: unknown } } | null;
+      const record = entry as { "@type"?: unknown; name?: unknown; member?: { startDate?: unknown; endDate?: unknown } } | null;
       const name = clean(record?.name);
       if (!name) continue; // masked institution — unknown, not empty
+      // LinkedIn lists past employers in alumniOf too, typed "Organization"; only an
+      // "EducationalOrganization" is education. Reading every entry as education once produced
+      // "Education: KPMG Australia", a false fact.
+      if (record?.["@type"] !== "EducationalOrganization") {
+        units.push({
+          id: `linkedin:past-organisation-${slugify(name)}`,
+          source: "linkedin",
+          unitType: "employment",
+          title: `Past organisation on LinkedIn: ${name}`,
+          text: `The public LinkedIn profile lists ${name} as a past organisation. LinkedIn does not show its dates or role to logged-out visitors, so the CV is the source for those. Retrieved ${retrievedAt}.`,
+          employer: name,
+          retrievedAt,
+        });
+        continue;
+      }
       const start = record?.member?.startDate;
       const end = record?.member?.endDate;
       units.push({

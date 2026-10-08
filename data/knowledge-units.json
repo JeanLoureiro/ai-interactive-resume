@@ -5,7 +5,7 @@
     "unitType": "profile",
     "title": "CV header — name, title, location and public handles",
     "text": "Title: Senior AI Engineer\n\nLocation: Gold Coast, QLD, Australia\n\nLinkedIn: linkedin.com/in/jeanloureiro\n\nGitHub: github.com/JeanLoureiro\n\nContact details: redacted from this knowledge base by design. See the source note above.",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "cv:professional-summary",
@@ -13,7 +13,7 @@
     "unitType": "summary",
     "title": "Professional summary",
     "text": "Senior engineer with 15+ years shipping production software, now focused on agentic systems and the\nengineering harnesses that make AI output dependable. Designs the constraints agents work inside:\nskills, hooks, subagents, AGENTS.md conventions and codegen, so generated code meets the standard\nbefore it reaches a human reviewer.\n\nBuilds LLM applications end to end in Python and TypeScript, tool interfaces via MCP, evaluation\nscripts and deliberate human approval checkpoints for anything that reaches a customer. At KPMG,\ndelivered Azure OpenAI features into a heavily governed Big Four environment and set the frontend\nengineering standards a team worked to.\n\nCares about consistency, simplicity and maintainability: systems other people can support after\nhandover.",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "cv:skills-ai-and-agentic-engineering",
@@ -21,7 +21,7 @@
     "unitType": "skill",
     "title": "Skills — AI and agentic engineering",
     "text": "LLM application development (Anthropic API, Azure OpenAI), agent workflow design, human-in-the-loop\napproval and escalation patterns, MCP servers (building and integrating), harness engineering\n(skills, hooks, subagents, slash commands, AGENTS.md, codegen), prompt-driven development,\nevaluation scripts and automated test suites, Claude Code, GitHub Copilot, git worktrees.",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "cv:skills-languages",
@@ -29,7 +29,7 @@
     "unitType": "skill",
     "title": "Skills — Languages",
     "text": "TypeScript, JavaScript, Python, C# (review and maintain), SQL, CSS/SASS.",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "cv:skills-backend-and-data",
@@ -37,7 +37,7 @@
     "unitType": "skill",
     "title": "Skills — Backend and data",
     "text": "FastAPI, Node.js, REST APIs, SignalR (WebSockets), Azure Functions, Supabase, PostgreSQL.",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "cv:skills-azure-and-devops",
@@ -45,7 +45,7 @@
     "unitType": "skill",
     "title": "Skills — Azure and DevOps",
     "text": "Azure OpenAI, Azure Functions, App Service, Key Vault, Application Insights, Entra ID, Azure DevOps\n(ADO), CI/CD pipelines, Git, automated testing, peer review, release management.",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "cv:skills-frontend",
@@ -53,7 +53,7 @@
     "unitType": "skill",
     "title": "Skills — Frontend",
     "text": "React, Next.js, Material-UI (MUI), Nx, Module Federation, Microfrontend Architecture, Storybook,\nTailwind, Mobx.",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "cv:skills-delivery",
@@ -61,18 +61,18 @@
     "unitType": "skill",
     "title": "Skills — Delivery",
     "text": "Agile squads (Scrum, Kanban, XP), backlog refinement, showcases, code review standards, technical\ndocumentation.",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "cv:kpmg-manager-senior-software-engineer",
     "source": "cv",
     "unitType": "employment",
     "title": "KPMG — Manager, Senior Software Engineer",
-    "text": "Business Services. Automated internal processes and led frontend architecture for audit and feedback\nplatforms handling sensitive client data inside a highly governed enterprise environment.",
+    "text": "Location: Remote\n\nBusiness Services. Automated internal processes and led frontend architecture for audit and feedback\nplatforms handling sensitive client data inside a highly governed enterprise environment.",
     "employer": "KPMG",
     "dateStart": "2022-04",
     "dateEnd": "2026-08",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "cv:kpmg-agentic-delivery-monorepo-to-microfrontend-migration",
@@ -83,7 +83,7 @@
     "employer": "KPMG",
     "dateStart": "2022-04",
     "dateEnd": "2026-08",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "cv:kpmg-harness-engineering-guardrails-for-ai-assisted-developm",
@@ -94,7 +94,7 @@
     "employer": "KPMG",
     "dateStart": "2022-04",
     "dateEnd": "2026-08",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "cv:kpmg-ontrack-audit-platform",
@@ -105,7 +105,7 @@
     "employer": "KPMG",
     "dateStart": "2022-04",
     "dateEnd": "2026-08",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "cv:kpmg-kymchat-enterprise-assistant",
@@ -116,7 +116,7 @@
     "employer": "KPMG",
     "dateStart": "2022-04",
     "dateEnd": "2026-08",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "cv:kpmg-ufp-unified-feedback-platform",
@@ -127,70 +127,70 @@
     "employer": "KPMG",
     "dateStart": "2022-04",
     "dateEnd": "2026-08",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "cv:seaportopx-dhi-senior-front-end-developer",
     "source": "cv",
     "unitType": "employment",
     "title": "SeaportOPX (DHI) — Senior Front-End Developer",
-    "text": "Contributed to the migration of NCOS Online from Web Components to React with Mobx, working alongside\nthe Tech Lead on a port operations platform used for transit predictions and mooring arrangements.\nIntroduced Storybook for component documentation and ran the team's first experiments with Module\nFederation. Certified as a Scrum Master to help the team establish consistent Agile practices,\nimproving sprint predictability by surfacing blockers earlier.",
+    "text": "Location: Hybrid\n\nContributed to the migration of NCOS Online from Web Components to React with Mobx, working alongside\nthe Tech Lead on a port operations platform used for transit predictions and mooring arrangements.\nIntroduced Storybook for component documentation and ran the team's first experiments with Module\nFederation. Certified as a Scrum Master to help the team establish consistent Agile practices,\nimproving sprint predictability by surfacing blockers earlier.",
     "employer": "SeaportOPX (DHI)",
     "dateStart": "2020-09",
     "dateEnd": "2022-04",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "cv:localsearch-front-end-developer-reactjs",
     "source": "cv",
     "unitType": "employment",
     "title": "Localsearch — Front-End Developer (ReactJS)",
-    "text": "Migrated the codebase from class components to React Hooks and cut bundle size through code splitting\nand dependency reduction, improving initial load time and search rankings on an AWS-hosted\napplication.",
+    "text": "Location: Robina\n\nMigrated the codebase from class components to React Hooks and cut bundle size through code splitting\nand dependency reduction, improving initial load time and search rankings on an AWS-hosted\napplication.",
     "employer": "Localsearch",
     "dateStart": "2019-04",
     "dateEnd": "2020-05",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "cv:marketing-triage-ec-pohl-co",
     "source": "cv",
     "unitType": "project",
     "title": "Marketing Triage, EC Pohl & Co",
-    "text": "End-to-end LLM application for a wealth management firm, built solo in Python and FastAPI on the\nAnthropic API. A client submits a form; the system selects the appropriate product for their\ncircumstances, drafts a tailored email, and routes it to the CMO through a dashboard for review and\napproval before anything is sent. Human approval is a designed control point, not an afterthought.\nAlso building an MCP server that exposes recommendation activity to the CMO, so marketing campaigns\ncan be planned around what the system is actually recommending rather than guesswork.\n\nNote on the date: the CV states the year 2026 without a month. The month recorded here is not stated\nin the source.",
+    "text": "Role: AI Engineer\nStatus: in test, launching shortly\n\nEnd-to-end LLM application for a wealth management firm, built solo in Python and FastAPI on the\nAnthropic API. A client submits a form; the system selects the appropriate product for their\ncircumstances, drafts a tailored email, and routes it to the CMO through a dashboard for review and\napproval before anything is sent. Human approval is a designed control point, not an afterthought.\nAlso building an MCP server that exposes recommendation activity to the CMO, so marketing campaigns\ncan be planned around what the system is actually recommending rather than guesswork.\n\nNote on the date: the CV states the year 2026 without a month. The month recorded here is not stated\nin the source.",
     "employer": "EC Pohl & Co",
     "dateStart": "2026-01",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "cv:pohly-private-wealth-client-portal",
     "source": "cv",
     "unitType": "project",
     "title": "Pohly — private wealth client portal",
-    "text": "Embedded with the client and stakeholders to understand the problem, then built a working proof of\nconcept quickly to validate feasibility before any commitment to a full build. After alignment on the\nPOC, led technical scoping for a full portal covering dashboards, reporting, onboarding, portfolio\nviews and portfolio news. Next.js, TypeScript, MUI.",
+    "text": "Role: Forward Deployed Engineer\n\nEmbedded with the client and stakeholders to understand the problem, then built a working proof of\nconcept quickly to validate feasibility before any commitment to a full build. After alignment on the\nPOC, led technical scoping for a full portal covering dashboards, reporting, onboarding, portfolio\nviews and portfolio news. Next.js, TypeScript, MUI.",
     "employer": "EC Pohl & Co",
     "dateStart": "2025-11",
     "link": "portal.ecpohl.com",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "cv:financial-sanity",
     "source": "cv",
     "unitType": "project",
     "title": "Financial Sanity",
-    "text": "Started as a personal tool to organise personal finances and grew into a wealth-tracking app for\nAustralian investors: net worth aggregation across stocks, ETFs, crypto, property and superannuation,\nFIRE projections, and FIFO capital gains calculations aligned to Australian tax rules. Designed and\nbuilt solo. Next.js, TypeScript, Tailwind, Supabase.",
+    "text": "Role: Full Stack Developer\n\nStarted as a personal tool to organise personal finances and grew into a wealth-tracking app for\nAustralian investors: net worth aggregation across stocks, ETFs, crypto, property and superannuation,\nFIRE projections, and FIFO capital gains calculations aligned to Australian tax rules. Designed and\nbuilt solo. Next.js, TypeScript, Tailwind, Supabase.",
     "dateStart": "2025-01",
     "link": "financialsanity.app",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "cv:the-clubhouse-poker",
     "source": "cv",
     "unitType": "project",
     "title": "The Clubhouse Poker",
-    "text": "Live poker platform serving active users, built with a co-founder from Atlassian on shared full-stack\nresponsibilities. Led the migration from AWS Amplify to Supabase, redesigning the data architecture\nand authentication flow to reduce infrastructure complexity. Next.js, TypeScript, Tailwind, Supabase.",
+    "text": "Role: Full Stack Developer\n\nLive poker platform serving active users, built with a co-founder from Atlassian on shared full-stack\nresponsibilities. Led the migration from AWS Amplify to Supabase, redesigning the data architecture\nand authentication flow to reduce infrastructure complexity. Next.js, TypeScript, Tailwind, Supabase.",
     "dateStart": "2024-11",
     "link": "theclubhousepoker.com",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "cv:how-the-projects-are-built",
@@ -198,7 +198,7 @@
     "unitType": "project",
     "title": "How the projects are built",
     "text": "All four projects are developed agent-first using Claude Code: planning with Opus, implementation\nwith Sonnet and Haiku, inside a harness of project skills, hooks and slash commands.",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "cv:scrum-master",
@@ -206,7 +206,7 @@
     "unitType": "certificate",
     "title": "Scrum Master",
     "text": "Scrum Master, scrum.org.",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "cv:kanban-management-professional-i",
@@ -214,24 +214,32 @@
     "unitType": "certificate",
     "title": "Kanban Management Professional I",
     "text": "KMP I, Kanban System Design.",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "linkedin:profile",
     "source": "linkedin",
     "unitType": "profile",
     "title": "LinkedIn profile headline and location",
-    "text": "Headline: I’m a Senior Software Engineer working at the intersection of frontend systems and…\nLocation: Gold Coast, Queensland, Australia\nNote: LinkedIn truncates the public headline. The text above is exactly what the logged-out profile shows.",
-    "retrievedAt": "2026-09-21"
+    "text": "Headline: Senior software engineer with 15+ years shipping production web applications, now…\nLocation: Gold Coast, Queensland, Australia\nNote: LinkedIn truncates the public headline. The text above is exactly what the logged-out profile shows.",
+    "retrievedAt": "2026-10-08"
   },
   {
-    "id": "linkedin:current-employer",
+    "id": "linkedin:no-current-employer",
+    "source": "linkedin",
+    "unitType": "profile",
+    "title": "No current employer on the public LinkedIn profile",
+    "text": "The public LinkedIn profile shows no current employer: every listed organisation is a past one. Retrieved 2026-10-08.",
+    "retrievedAt": "2026-10-08"
+  },
+  {
+    "id": "linkedin:past-organisation-kpmg-australia",
     "source": "linkedin",
     "unitType": "employment",
-    "title": "Employer shown on the public LinkedIn profile",
-    "text": "The public LinkedIn profile lists KPMG Australia as the employer, with no end date shown, which LinkedIn renders as the current position. Retrieved 2026-09-21. LinkedIn masks every other employer entry for logged-out visitors, so the remainder of the work history is not readable from this source.",
+    "title": "Past organisation on LinkedIn: KPMG Australia",
+    "text": "The public LinkedIn profile lists KPMG Australia as a past organisation. LinkedIn does not show its dates or role to logged-out visitors, so the CV is the source for those. Retrieved 2026-10-08.",
     "employer": "KPMG Australia",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "linkedin:education-the-university-of-queensland",
@@ -241,15 +249,33 @@
     "text": "The University of Queensland, 2015–2017. Listed on the public LinkedIn profile. The CV contains no education section, so this source is the only record of it.",
     "dateStart": "2015",
     "dateEnd": "2017",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "linkedin:masking-limitation",
     "source": "linkedin",
     "unitType": "profile",
     "title": "What this LinkedIn source cannot see",
-    "text": "LinkedIn serves logged-out visitors a partially masked profile: past employers beyond the first, most role descriptions, and most job titles are replaced with runs of asterisks. This ingestion deliberately discards masked values rather than storing them, so the absence of a LinkedIn record for a role is not evidence that the role does not exist — the CV is the fuller source for work history. Retrieved 2026-09-21.",
-    "retrievedAt": "2026-09-21"
+    "text": "LinkedIn serves logged-out visitors a partially masked profile: past employers beyond the first, most role descriptions, and most job titles are replaced with runs of asterisks. This ingestion deliberately discards masked values rather than storing them, so the absence of a LinkedIn record for a role is not evidence that the role does not exist — the CV is the fuller source for work history. Retrieved 2026-10-08.",
+    "retrievedAt": "2026-10-08"
+  },
+  {
+    "id": "github:repo-ai-sports-companion",
+    "source": "github",
+    "unitType": "repository",
+    "title": "Public repository: ai-sports-companion",
+    "text": "Public GitHub repository \"ai-sports-companion\". No description set. Primary language: Python. Last updated 2026-10-07. Stars: 0.",
+    "link": "https://github.com/JeanLoureiro/ai-sports-companion",
+    "retrievedAt": "2026-10-08"
+  },
+  {
+    "id": "github:repo-ai-dev-team",
+    "source": "github",
+    "unitType": "repository",
+    "title": "Public repository: ai-dev-team",
+    "text": "Public GitHub repository \"ai-dev-team\". No description set. Primary language: TypeScript. Last updated 2026-10-05. Stars: 0.",
+    "link": "https://github.com/JeanLoureiro/ai-dev-team",
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "github:repo-jdump",
@@ -258,7 +284,7 @@
     "title": "Public repository: jdump",
     "text": "Public GitHub repository \"jdump\" (a fork). Description: J!Dump is a very easy to use debugging extension for Joomla developers and template designers. Download links below. Primary language: PHP. Last updated 2023-01-28. Stars: 0.",
     "link": "https://github.com/JeanLoureiro/jdump",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "github:repo-react-testing-library-course",
@@ -267,7 +293,7 @@
     "title": "Public repository: react-testing-library-course",
     "text": "Public GitHub repository \"react-testing-library-course\" (a fork). Description: Test React Components with Jest and React Testing Library on TestingJavaScript.com Last updated 2021-08-06. Stars: 0.",
     "link": "https://github.com/JeanLoureiro/react-testing-library-course",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "github:repo-vidly-app",
@@ -276,7 +302,7 @@
     "title": "Public repository: vidly-app",
     "text": "Public GitHub repository \"vidly-app\". Description: Mosh's course on Reactjs with backend services Primary language: JavaScript. Last updated 2019-04-16. Stars: 1.",
     "link": "https://github.com/JeanLoureiro/vidly-app",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "github:repo-node-app",
@@ -285,7 +311,7 @@
     "title": "Public repository: node-app",
     "text": "Public GitHub repository \"node-app\". Description: Building some Node + Express app Primary language: JavaScript. Last updated 2019-03-14. Stars: 0.",
     "link": "https://github.com/JeanLoureiro/node-app",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "github:repo-deliveries",
@@ -294,7 +320,7 @@
     "title": "Public repository: Deliveries",
     "text": "Public GitHub repository \"Deliveries\". Description: My Reactjs Interview test Primary language: PHP. Last updated 2019-02-26. Stars: 1.",
     "link": "https://github.com/JeanLoureiro/Deliveries",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "github:repo-react-native",
@@ -303,7 +329,7 @@
     "title": "Public repository: react-native",
     "text": "Public GitHub repository \"react-native\". Description: React Native Udacity Course Primary language: JavaScript. Last updated 2019-02-26. Stars: 0.",
     "link": "https://github.com/JeanLoureiro/react-native",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "github:repo-react-todo-firebase",
@@ -312,7 +338,7 @@
     "title": "Public repository: react-todo-firebase",
     "text": "Public GitHub repository \"react-todo-firebase\". Description: A Todo App connected to Firebase Primary language: JavaScript. Last updated 2019-01-14. Stars: 0.",
     "link": "https://github.com/JeanLoureiro/react-todo-firebase",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "github:repo-reactpress",
@@ -321,7 +347,7 @@
     "title": "Public repository: reactpress",
     "text": "Public GitHub repository \"reactpress\". Description: Wordpress Theme using ReactJS Primary language: JavaScript. Last updated 2018-06-08. Stars: 0.",
     "link": "https://github.com/JeanLoureiro/reactpress",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "github:repo-basketball-league",
@@ -330,7 +356,7 @@
     "title": "Public repository: basketball-league",
     "text": "Public GitHub repository \"basketball-league\". Description: Tyler McGinnis course on React Router v4 Primary language: JavaScript. Last updated 2018-04-01. Stars: 0.",
     "link": "https://github.com/JeanLoureiro/basketball-league",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "github:repo-learning-react-router-v4",
@@ -339,7 +365,7 @@
     "title": "Public repository: learning-react-router-v4",
     "text": "Public GitHub repository \"learning-react-router-v4\". Description: Learning React Router V4 with Tyler McGinnis Primary language: JavaScript. Last updated 2018-03-26. Stars: 0.",
     "link": "https://github.com/JeanLoureiro/learning-react-router-v4",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "github:repo-github-battle",
@@ -348,7 +374,7 @@
     "title": "Public repository: github-battle",
     "text": "Public GitHub repository \"github-battle\". Description: Github Battle is a refactor from Tyler McGinnis code/course called \"Modern Javascript\" Primary language: JavaScript. Last updated 2018-03-20. Stars: 0.",
     "link": "https://github.com/JeanLoureiro/github-battle",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "github:repo-github_battle",
@@ -357,7 +383,7 @@
     "title": "Public repository: github_battle",
     "text": "Public GitHub repository \"github_battle\". Description: Github battle tutorial by Tyler McGinnis Primary language: JavaScript. Last updated 2017-06-25. Stars: 0.",
     "link": "https://github.com/JeanLoureiro/github_battle",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "github:repo-realestate",
@@ -366,7 +392,7 @@
     "title": "Public repository: Realestate",
     "text": "Public GitHub repository \"Realestate\". Description: First Commit Primary language: PHP. Last updated 2014-09-22. Stars: 0.",
     "link": "https://github.com/JeanLoureiro/Realestate",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "github:repo-rs",
@@ -375,7 +401,7 @@
     "title": "Public repository: rs",
     "text": "Public GitHub repository \"rs\". Description: A small project to learn laravel Primary language: PHP. Last updated 2014-08-15. Stars: 0.",
     "link": "https://github.com/JeanLoureiro/rs",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "github:repo-laravel-4-simple-blog-starter",
@@ -384,15 +410,15 @@
     "title": "Public repository: Laravel-4-simple-blog-starter",
     "text": "Public GitHub repository \"Laravel-4-simple-blog-starter\". Description: Use this code to follow along with my YouTube tutorial Last updated 2014-05-27. Stars: 0.",
     "link": "https://github.com/JeanLoureiro/Laravel-4-simple-blog-starter",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   },
   {
     "id": "github:public-footprint-scope",
     "source": "github",
     "unitType": "profile",
     "title": "Scope and age of the public GitHub profile",
-    "text": "The public GitHub profile for JeanLoureiro contains 15 public repositories, of which 2 are forks. They were last updated between 2014 and 2023. Their own descriptions identify most of them as course and tutorial follow-alongs. None of them corresponds to the projects described on the CV, and none demonstrates the AI or agentic engineering work the CV leads with. The public profile is therefore a record of earlier learning work, not a representation of current capability. The CV projects — Marketing Triage, Pohly, Financial Sanity and The Clubhouse Poker — are in private repositories, as is client work. Jean's stated position is that these can be shared on request during a hiring conversation, so the absence of a public repository for a project is not evidence against that project. Retrieved 2026-09-21.",
+    "text": "The public GitHub profile for JeanLoureiro contains 17 public repositories, of which 2 are forks. They were last updated between 2014 and 2026. Their own descriptions identify most of them as course and tutorial follow-alongs. None of them corresponds to the projects described on the CV, and none demonstrates the AI or agentic engineering work the CV leads with. The public profile is therefore a record of earlier learning work, not a representation of current capability. The CV projects — Marketing Triage, Pohly, Financial Sanity and The Clubhouse Poker — are in private repositories, as is client work. Jean's stated position is that these can be shared on request during a hiring conversation, so the absence of a public repository for a project is not evidence against that project. Retrieved 2026-10-08.",
     "link": "https://github.com/JeanLoureiro",
-    "retrievedAt": "2026-09-21"
+    "retrievedAt": "2026-10-08"
   }
 ]

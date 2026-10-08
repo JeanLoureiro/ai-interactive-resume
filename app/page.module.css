@@ -283,3 +283,18 @@
   cursor: pointer;
   text-decoration: underline;
 }
+
+.gate {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+}
+
+.gate p {
+  margin: 0 0 12px;
+}
+
+.link {
+  color: var(--accent);
+}

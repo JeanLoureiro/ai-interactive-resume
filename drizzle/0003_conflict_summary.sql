@@ -1,0 +1,1 @@
+ALTER TABLE "conflicts" ADD COLUMN "summary" text DEFAULT '' NOT NULL;

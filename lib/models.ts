@@ -46,6 +46,8 @@ export const ConflictSchema = z.object({
   /** Units on each side. Retrieving any one of these pulls in the others. */
   unitIds: z.array(z.string().min(1)).min(1),
   /** What the system must convey when a question lands here. Shown to the model as context. */
+  /** One or two plain sentences shown to visitors. The resolution note below is for the model only. */
+  summary: z.string().min(1),
   resolutionNote: z.string().min(1),
 });
 export type Conflict = z.infer<typeof ConflictSchema>;

@@ -16,7 +16,8 @@ import { getFastModel } from "../lib/config";
 import { getLlmProvider } from "../lib/llm";
 import { loadDataset, type EvalCase } from "./dataset";
 
-const TOP_K = 5;
+/** RETRIEVAL_TOP_K, as the app uses it (default 5), so other values can be measured for free. */
+const TOP_K = Number.parseInt(process.env["RETRIEVAL_TOP_K"] ?? "", 10) || 5;
 
 type Mode = "bm25" | "hybrid";
 

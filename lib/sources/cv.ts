@@ -118,6 +118,9 @@ export function isContractMarkdown(raw: string): boolean {
   return sections.length > 0 && sections.every(isSectionName) && /^### /m.test(markdown);
 }
 
+/** Entry metadata kept as text at the top of the unit, in this order. */
+const TEXT_META_KEYS = ["Role", "Location", "Status"] as const;
+
 /** Parses a CV written in the format contract. No model, no guard needed: a human wrote it. */
 export function parseContractMarkdown(raw: string, retrievedAt: string): KnowledgeUnit[] {
   // The source note is documentation for a human reader, not knowledge about the subject.
@@ -158,12 +161,19 @@ export function parseContractMarkdown(raw: string, retrievedAt: string): Knowled
       const employer = entry.meta.get("Employer");
       const dates = entry.meta.get("Dates");
       const link = entry.meta.get("Link");
+      // Role, Location and Status have no field of their own, so they lead the text. They used to be
+      // parsed and then dropped, which hid every project role ("Forward Deployed Engineer") from
+      // the assistant.
+      const facts = TEXT_META_KEYS.flatMap((key) => {
+        const value = entry.meta.get(key);
+        return value ? [`${key}: ${value}`] : [];
+      });
       units.push(
         entryToUnit(
           {
             title: entry.title,
             section: sectionName,
-            body: entry.body,
+            body: facts.length > 0 ? `${facts.join("\n")}\n\n${entry.body}` : entry.body,
             ...(employer ? { employer } : {}),
             ...(dates ? { dates } : {}),
             ...(link ? { link } : {}),

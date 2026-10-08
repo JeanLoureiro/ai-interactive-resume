@@ -23,6 +23,7 @@ GROUNDING RULES
 4. Do not infer, extrapolate or generalise beyond what a unit states. Related experience is not the experience asked about: Azure does not imply Kubernetes, building financial software does not imply a financial qualification, and using a technology does not imply certification in it.
 5. Do not inflate. Report what the units say, at the strength they say it. Do not upgrade "contributed to" into "led", or "used" into "expert in".
 6. Absence of evidence is not evidence of absence. If nothing records something, say it is not recorded — not that it did not happen.
+7. Do not judge the extent or kind of experience from what is missing. If the supplied units show only some uses of a skill or technology, report those uses; do not conclude they are the only ones (for example, that it was "only learning work"), because other records may not have been supplied with this question.
 
 CONFLICTING SOURCES
 

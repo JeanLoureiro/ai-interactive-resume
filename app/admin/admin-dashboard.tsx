@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { UnitDiff } from "@/lib/admin/drafts";
 import type { KnowledgeUnit } from "@/lib/models";
+import type { InviteSummary } from "@/lib/access";
 import type { Suggestion } from "@/lib/memory";
 import type { ResumeReport } from "@/lib/resume";
 import styles from "./admin.module.css";
@@ -40,6 +41,99 @@ function UnitList({ title, units }: { title: string; units: KnowledgeUnit[] }) {
         </details>
       ))}
     </div>
+  );
+}
+
+const STATUS_LABEL: Record<InviteSummary["status"], string> = {
+  unused: "not used yet",
+  active: "active",
+  expired: "expired",
+  revoked: "revoked",
+};
+
+function InvitesSection({ invites, inviteOnly, onChange }: { invites: InviteSummary[]; inviteOnly: boolean; onChange: () => void }) {
+  const [label, setLabel] = useState("");
+  const [created, setCreated] = useState<{ code: string; link: string; label: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function act(body: object): Promise<{ code?: string; link?: string } | null> {
+    setError(null);
+    const res = await fetch("/api/admin/invites", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    }).catch(() => null);
+    const json = (await res?.json().catch(() => ({}))) as { code?: string; link?: string; error?: string };
+    if (!res?.ok) {
+      setError(json.error ?? "Something went wrong.");
+      return null;
+    }
+    onChange();
+    return json;
+  }
+
+  return (
+    <section className={styles.card}>
+      <h2 className={styles.h2}>Invites</h2>
+      <p className={styles.muted}>
+        {inviteOnly
+          ? "Only you and people with an invite can ask questions. An invite lasts 24 hours from first use, on any device; one never used expires after 14 days."
+          : "ACCESS_MODE is public, so anyone can ask questions. Invites still work if you switch to invite mode."}
+      </p>
+      <form
+        className={styles.row}
+        onSubmit={(event) => {
+          event.preventDefault();
+          const forLabel = label.trim();
+          void act({ action: "create", label: forLabel }).then((result) => {
+            if (result?.code && result.link) setCreated({ code: result.code, link: result.link, label: forLabel });
+          });
+          setLabel("");
+        }}
+      >
+        <input className={styles.input} aria-label="Invite label" placeholder="Who is it for? e.g. Acme recruiter" value={label} onChange={(event) => setLabel(event.target.value)} maxLength={100} />
+        <button className={styles.button} type="submit" disabled={!label.trim()}>
+          Create invite
+        </button>
+      </form>
+      {error && <p className={styles.error}>{error}</p>}
+      {created && (
+        <div className={styles.success}>
+          <p>
+            Invite for <strong>{created.label}</strong>. Copy it now: the code is not stored and cannot be shown again.
+          </p>
+          <p>
+            <code>{created.link}</code>{" "}
+            <button type="button" className={styles.ghost} onClick={() => void navigator.clipboard.writeText(created.link)}>
+              Copy link
+            </button>
+          </p>
+          <p>
+            Code: <code>{created.code}</code>{" "}
+            <button type="button" className={styles.ghost} onClick={() => void navigator.clipboard.writeText(created.code)}>
+              Copy code
+            </button>
+          </p>
+        </div>
+      )}
+      {invites.map((invite) => (
+        <div key={invite.id} className={styles.suggestion}>
+          <span>
+            {invite.label}{" "}
+            <span className={styles.muted}>
+              · {STATUS_LABEL[invite.status]}
+              {invite.status === "active" && invite.expiresAt ? ` until ${new Date(invite.expiresAt).toLocaleString()}` : ""} · {invite.questionsAsked} question
+              {invite.questionsAsked === 1 ? "" : "s"}
+            </span>
+          </span>
+          {(invite.status === "active" || invite.status === "unused") && (
+            <button className={styles.ghost} type="button" onClick={() => void act({ action: "revoke", id: invite.id })}>
+              Revoke
+            </button>
+          )}
+        </div>
+      ))}
+    </section>
   );
 }
 
@@ -102,10 +196,14 @@ export function AdminDashboard({
   liveCvCount,
   draft,
   suggestions,
+  invites,
+  inviteOnly,
 }: {
   liveCvCount: number;
   draft: DraftSummary | undefined;
   suggestions: Suggestion[];
+  invites: InviteSummary[];
+  inviteOnly: boolean;
 }) {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
@@ -171,6 +269,8 @@ export function AdminDashboard({
 
       {error && <p className={styles.error}>{error}</p>}
       {notice && <p className={styles.success}>{notice}</p>}
+
+      <InvitesSection invites={invites} inviteOnly={inviteOnly} onChange={() => router.refresh()} />
 
       <SuggestionsSection suggestions={suggestions} act={(body) => void run("suggest", "/api/admin/suggestions", JSON.stringify(body))} />
 

@@ -33,11 +33,17 @@ export async function loadThread(db: Db, conversationId: string): Promise<Array<
   return rows.map((row) => ({ question: row.question, response: row.response as AssistantResponse }));
 }
 
-export async function saveTurn(db: Db, conversationId: string, question: string, response: AssistantResponse): Promise<void> {
+export async function saveTurn(
+  db: Db,
+  conversationId: string,
+  question: string,
+  response: AssistantResponse,
+  inviteId?: string,
+): Promise<void> {
   const now = new Date();
   await db
     .insert(conversations)
-    .values({ id: conversationId, createdAt: now, updatedAt: now })
+    .values({ id: conversationId, inviteId: inviteId ?? null, createdAt: now, updatedAt: now })
     .onConflictDoUpdate({ target: conversations.id, set: { updatedAt: now } });
   await db.insert(messages).values({
     id: randomUUID(),

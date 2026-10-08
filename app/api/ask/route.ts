@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { countInviteQuestion, resolveAccess } from "@/lib/access";
 import { getRateLimitPerHour } from "@/lib/config";
 import { getDb, isDatabaseConfigured } from "@/lib/db/client";
 import { clientAddress } from "@/lib/http";
@@ -39,6 +40,11 @@ export async function POST(request: Request): Promise<Response> {
     // server instance. History is only ever loaded here, server-side, so it cannot be forged.
     const db = isDatabaseConfigured() ? getDb() : undefined;
 
+    const access = await resolveAccess(request, db);
+    if (!access.allowed) {
+      return Response.json({ error: "An invite code is needed to ask questions.", gate: true }, { status: 401 });
+    }
+
     const limit = await consumeRateLimit(db, clientAddress(request), getRateLimitPerHour());
     if (!limit.allowed) {
       const minutes = Math.ceil(limit.retryAfterSeconds / 60);
@@ -54,7 +60,8 @@ export async function POST(request: Request): Promise<Response> {
     if (!db) return Response.json(response);
 
     const conversationId = existing ?? newConversationId();
-    await saveTurn(db, conversationId, question, response);
+    await saveTurn(db, conversationId, question, response, access.inviteId);
+    if (access.inviteId) await countInviteQuestion(db, access.inviteId);
     // Only standalone questions that were answered from sources become suggestion candidates: a
     // follow-up ("And before that?") means nothing out of context, and a refusal is a poor first click.
     if (response.status === "answered" && history.length === 0) await countQuestion(db, question);

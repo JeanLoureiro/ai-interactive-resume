@@ -22,6 +22,20 @@
       "when": 1791423613049,
       "tag": "0002_conversations",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791425838502,
+      "tag": "0003_conflict_summary",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791426133935,
+      "tag": "0004_invites",
+      "breakpoints": true
     }
   ]
 }
