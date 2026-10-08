@@ -75,7 +75,9 @@ Alongside BM25, `lib/embeddings.ts` embeds every unit (title and text) and each 
 similarity is a dot product, computed in memory against vectors cached with the knowledge base: no
 database query per question. Units below a similarity of 0.47 are not matches at all; calibrated on
 this corpus, where off-topic questions topped out at 0.45 and the weakest answerable one scored
-0.48. The two rankings, 20 candidates each, are merged with Reciprocal Rank Fusion
+0.48. Public GitHub repository units are weighted 0.5 in the final ranking: they are thin metadata and
+there are many of them, and on technology questions they crowded CV units out of the top 5. The two
+rankings, 20 candidates each, are merged with Reciprocal Rank Fusion
 (score = Σ 1 / (60 + rank)), which compares ranks rather than incomparable scores; ties keep BM25's
 order. `RETRIEVAL_MODE=bm25` turns the model off.
 
@@ -111,6 +113,17 @@ unit retrieved for this turn. Measured results, including what memory still miss
 Suggested questions come from the owner, plus visitor questions that were asked on their own (not
 as follow-ups) and answered from sources. A visitor's question is shown to others only after the
 owner approves it in `/admin`.
+
+## Access
+
+With a database the assistant is invite-only by default (`lib/access.ts`). The owner gets in by
+signing in to `/admin`. Recruiters get an invite the owner creates there: an 8-character code from an
+alphabet without lookalikes, stored only as a SHA-256 hash, valid 24 hours from first use on any
+device and 14 days if unused. Redeeming it, by link or by typing it, sets a signed httpOnly cookie
+until the invite expires; every visitor route checks the invite in the database on each request, so
+revoking takes effect at once. Redemption is rate-limited per address through Postgres. Conversations
+record which invite they came from, so the owner can see which recruiter asked what.
+`ACCESS_MODE=public` opens the assistant to everyone; the no-database demo is always public.
 
 ## How prompting works, concretely
 

@@ -4,7 +4,7 @@
     "source": "cv",
     "unitType": "profile",
     "title": "CV header — name, title, location and public handles",
-    "text": "Title: Senior AI Engineer\n\nLocation: Gold Coast, QLD, Australia\n\nLinkedIn: linkedin.com/in/jeanloureiro\n\nGitHub: github.com/JeanLoureiro\n\nContact details: redacted from this knowledge base by design. See the source note above.",
+    "text": "Title: Senior AI Engineer\n\nCurrent position: Since the KPMG role ended in August 2026, Jean is open to new full-time roles, while building AI products for clients on contract.\n\nLocation: Gold Coast, QLD, Australia\n\nLinkedIn: linkedin.com/in/jeanloureiro\n\nGitHub: github.com/JeanLoureiro\n\nContact details: redacted from this knowledge base by design. See the source note above.",
     "retrievedAt": "2026-10-08"
   },
   {
@@ -156,7 +156,7 @@
     "source": "cv",
     "unitType": "project",
     "title": "Marketing Triage, EC Pohl & Co",
-    "text": "Role: AI Engineer\nStatus: in test, launching shortly\n\nEnd-to-end LLM application for a wealth management firm, built solo in Python and FastAPI on the\nAnthropic API. A client submits a form; the system selects the appropriate product for their\ncircumstances, drafts a tailored email, and routes it to the CMO through a dashboard for review and\napproval before anything is sent. Human approval is a designed control point, not an afterthought.\nAlso building an MCP server that exposes recommendation activity to the CMO, so marketing campaigns\ncan be planned around what the system is actually recommending rather than guesswork.\n\nNote on the date: the CV states the year 2026 without a month. The month recorded here is not stated\nin the source.",
+    "text": "Role: AI Engineer\nEngagement: client project, on contract\nStatus: in test, launching shortly\n\nEnd-to-end LLM application for a wealth management firm, built solo in Python and FastAPI on the\nAnthropic API. A client submits a form; the system selects the appropriate product for their\ncircumstances, drafts a tailored email, and routes it to the CMO through a dashboard for review and\napproval before anything is sent. Human approval is a designed control point, not an afterthought.\nAlso building an MCP server that exposes recommendation activity to the CMO, so marketing campaigns\ncan be planned around what the system is actually recommending rather than guesswork.\n\nNote on the date: the CV states the year 2026 without a month. The month recorded here is not stated\nin the source.",
     "employer": "EC Pohl & Co",
     "dateStart": "2026-01",
     "retrievedAt": "2026-10-08"
@@ -166,7 +166,7 @@
     "source": "cv",
     "unitType": "project",
     "title": "Pohly — private wealth client portal",
-    "text": "Role: Forward Deployed Engineer\n\nEmbedded with the client and stakeholders to understand the problem, then built a working proof of\nconcept quickly to validate feasibility before any commitment to a full build. After alignment on the\nPOC, led technical scoping for a full portal covering dashboards, reporting, onboarding, portfolio\nviews and portfolio news. Next.js, TypeScript, MUI.",
+    "text": "Role: Forward Deployed Engineer\nEngagement: client project, on contract\n\nEmbedded with the client and stakeholders to understand the problem, then built a working proof of\nconcept quickly to validate feasibility before any commitment to a full build. After alignment on the\nPOC, led technical scoping for a full portal covering dashboards, reporting, onboarding, portfolio\nviews and portfolio news. Next.js, TypeScript, MUI.",
     "employer": "EC Pohl & Co",
     "dateStart": "2025-11",
     "link": "portal.ecpohl.com",

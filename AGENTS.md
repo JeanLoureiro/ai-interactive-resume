@@ -16,10 +16,6 @@ Must follow principles:
 - DRY : Don't Repeat Yourself
 - SOLID : Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, Dependency Inversion
 
-### Planning
-
-- Must use /lavish for planning
-
 ### Documentation
 
 - Must keep up to date with spec/documentation.

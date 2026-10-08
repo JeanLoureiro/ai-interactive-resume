@@ -1,16 +1,28 @@
-# Ask about Jean
+# ai-interactive-resume
 
-A source-grounded assistant that answers interview questions about Jean Loureiro's professional
-background — and says so, explicitly, when it cannot ground an answer in a citable source.
+An AI assistant that answers recruiters' questions about your career from your own resume, cites a
+source for every claim, and says plainly when the record does not cover something. It never invents
+an employer, a qualification or a skill, and where it cannot guarantee that mechanically, the docs
+say so and measure it instead.
 
-Originally built as a take-home exercise for a lead engineer role. "The brief" in these docs refers
-to that exercise.
+Built as a template: fill in `.env`, point it at your resume (PDF, DOCX or Markdown), deploy. The
+worked example in this repository is its author, Jean Loureiro.
 
-> **The constraint that drives every decision here.** The assistant must never invent
-> qualifications, employers, projects or achievements. The brief is explicit that a system
-> fabricating an employer is the same failure class as one fabricating a balance. Where this system
-> holds that line mechanically, it says so. Where it holds it only by measurement, it says that too —
-> see [the guard's blind spot](#what-the-guard-does-not-catch).
+## What it does
+
+- **Grounded answers.** Every claim is tied to the resume, LinkedIn or GitHub record it came from,
+  and shown with it. A deterministic guard discards any answer that cites something it was not given.
+- **Honest refusals.** "Not recorded" is said as such, never guessed at, and never turned into "did
+  not happen".
+- **Sources that disagree** are named, with which one is more reliable, instead of silently picking a
+  side.
+- **Upload a resume** as PDF, DOCX or Markdown in `/admin`. Every line the model extracts is checked
+  word by word against the file before it is stored; contact details are removed first.
+- **Follow-up questions** remember the conversation, without ever treating an earlier answer as a
+  source.
+- **Invite-only** by default: you create a code in `/admin`, a recruiter gets 24 hours.
+- **Any LLM provider**: Anthropic, or anything with an OpenAI-compatible API.
+- **Measured, not claimed**: 40 eval cases, each set committed before the feature it tests.
 
 ## Run it
 
@@ -104,21 +116,19 @@ same schema and the citation guard is the same, so a provider that returns malfo
 closed to a template, never to an unchecked answer. A bad key or unknown model is reported as a
 configuration error rather than "try again later".
 
-## What it knows
+## Access: invites
 
-43 knowledge units in `data/knowledge-units.json`, committed. Read that file and you know exactly
-what the assistant knows.
+With a database, the assistant is invite-only (`ACCESS_MODE=invite`, the default). You get in by
+signing in to `/admin` with `ADMIN_PASSWORD`. To let a recruiter in, create an invite in `/admin`
+and send them the link or the 8-character code:
 
-| Source | Units | Ingestion |
-| --- | ---: | --- |
-| CV | 23 | Hand-transcribed to `knowledge/sources/cv.md`, contact details removed at that step |
-| LinkedIn | 4 | Live fetch of the public profile, JSON-LD extracted |
-| GitHub | 16 | Unauthenticated REST API |
+- it lasts 24 hours from first use, on any device, and an unused invite expires after 14 days;
+- you can revoke it at any time, and see how many questions it asked;
+- only a hash of the code is stored;
+- without a code, visitors see a code box and a link to request access on LinkedIn.
 
-Three sources through three deliberately different mechanisms — a local document, an HTML scrape, a
-JSON API — because that is what demonstrates the adapter seam holds, rather than asserting it would.
-
-Full detail, including what was redacted and why: **[docs/knowledge-layer.md](docs/knowledge-layer.md)**.
+Set `ACCESS_MODE=public` to open it to everyone; questions stay rate-limited per visitor
+(`RATE_LIMIT_PER_HOUR`). The no-database demo is always public.
 
 ## How it works
 
@@ -156,102 +166,36 @@ That gap is covered by hand-graded `mustNotClaim` labels in the evaluation (case
 exactly it) and reported as a measured rate, not a guarantee. A reviewer who believed the guard were
 total would trust this system further than it deserves.
 
-## Sources that disagree
-
-The brief asks for one real conflict, gap or stale fact. The material produced six, all genuine —
-nothing here is synthetic. They live in `data/conflicts.json` as data rather than prompt text, so
-they can be enumerated, tested, and force-included at retrieval time.
-
-The headline one: **the CV ends the KPMG role in August 2026; the public LinkedIn profile still
-shows it as current.** Ask "where does Jean work now?" and the system names the disagreement, gives
-the CV's answer, and says which source is stale rather than silently picking a side. A stale fact
-asserted as current is the CV equivalent of quoting last month's balance.
-
-The others — a job title that differs between sources, education recorded only on LinkedIn with no
-degree stated anywhere, a public GitHub profile of 15 repositories last touched between 2014 and
-2023 that matches none of the CV projects, and project dates overlapping full-time employment — are
-in [docs/knowledge-layer.md](docs/knowledge-layer.md).
-
 ## Evaluation
 
-24 cases across all five required categories, with metrics and pass bars **committed before the
-first run** — the commit history is the evidence.
+40 cases across direct, multi-source, ambiguous, unanswerable, adversarial, paraphrase and
+follow-up questions. Each phase's cases and pass bars were committed before its code; the commit
+history shows the order. Latest run, Sonnet 5.5:
 
-Method, metric definitions, why there is no LLM-as-judge, and what would change if this guarded
-money movement instead of a CV: **[docs/evaluation.md](docs/evaluation.md)**.
+| Metric | Bar | Result |
+| --- | --- | --- |
+| Citation validity | 100% | **40/40** |
+| Refusal correctness | 100% | **9/9** |
+| Conflict surfacing | 100% | 3/4 |
+| Retrieval recall@5 | ≥ 90% | 20/30 |
+| Must-not-claim flags | 0 | 4, all refusals quoting the claim they refuse |
+| Cost per question | | $0.0144 |
 
-### Results
-
-| Metric | Bar | Sonnet 5 | Haiku 4.5 |
-| --- | --- | --- | --- |
-| Citation validity | 100% | **100%** (24/24) | 95.8% (23/24) |
-| Answer correctness (hand-graded) | ≥85% | **71.4%** (10/14) | not graded |
-| Retrieval recall@5 | ≥90% | **73.3%** (11/15) | 73.3% (11/15) |
-| Conflict surfacing | 100% | **100%** (5/5) | 100% (5/5) |
-| Refusal correctness | 100% | 75% (6/8) | 75% (6/8) |
-| Latency p50 / p95 | report | 7,796 / 17,532 ms | 2,562 / 5,460 ms |
-| Cost per question | report | $0.01529 | $0.00403 |
-
-**Two of five bars met.** Answer correctness landed at 71.4% against an 85% bar and retrieval recall
-at 73.3% against 90%.
-
-**Zero fabrications across 24 cases on both models.** Every claim made traced to a unit actually
-supplied. That is the constraint the system exists to hold, and it held.
-
-Three findings worth the click through to [docs/evaluation.md](docs/evaluation.md):
-
-- **Lexical retrieval fails on vocabulary mismatch, and it caused both correctness failures.** The
-  certificate units never use the word "certification"; the summary never uses the word
-  "experience". Both questions were answerable, neither was retrieved, and the system confidently
-  refused. A wrong refusal is the most expensive failure here — it reads as evidence of absence.
-  This is now a *measured* reason to add embeddings rather than a hypothetical one.
-- **Every must-not-claim flag was a false positive.** Five on Sonnet, one on Haiku, zero real
-  fabrications — the check does substring matching and is blind to negation, so it fires when a
-  correct refusal quotes the claim it is refusing. The best behaviour in the entire run (answering a
-  question, then disclosing and refusing an injected instruction) scored as five violations. The
-  self-review predicted this before the run.
-- **The evidence favours switching to Haiku** — it matched Sonnet on refusal, recall and conflict
-  surfacing while being ~3× faster and ~3.8× cheaper. The default was deliberately left on Sonnet,
-  because correctness was hand-graded on Sonnet only and switching on a partial comparison is the
-  kind of unevidenced decision this evaluation exists to prevent.
+`pnpm eval:retrieval` measures retrieval alone, at no cost. Method, every phase's results, and what
+the numbers do not show: **[docs/evaluation.md](docs/evaluation.md)**.
 
 ## Known limitations
 
 - **The guard's blind spot**, above. The most important one.
-- **`mustNotClaim` is substring matching**, so it catches obvious phrasings and misses paraphrases —
-  "holds a doctorate" would sail past a rule watching for "PhD". A tripwire, not a test.
-- **Retrieval is deliberately untuned.** "Can I see your code on GitHub?" does not rank the GitHub
-  scope unit into the top 5, because "github" appears in every repo unit and carries little IDF.
-  Left in and measured rather than fixed before the eval existed.
-- **LinkedIn gives very little.** The public profile is masked for logged-out visitors; only the
-  first employer and first education entry are readable. Masked values are discarded rather than
-  stored, so this source contributes four units and cannot be made to contribute more without
-  authenticating.
-- **No caching, no rate limiting.** Both are named in
-  [what to do before production](docs/architecture.md#before-production-and-what-breaks-at-100).
-
-## Decisions, cuts and AI use
-
-Five decisions with what was rejected and what settled each, what was cut and why, where AI was used
-and what was changed after review, and a self-review:
-**[docs/decisions.md](docs/decisions.md)**.
-
-Short version on AI use: this repository was built by Claude Code (Opus 5) from a written plan, with
-Jean directing and reviewing. The commit history is the real record — each message states the
-reasoning for that step. `docs/decisions.md` lists what did not survive review, including one
-factual error that reached a written plan before it was checked.
-
-## Time spent
-
-Started at 9:54am
-
-Finsihed at 12pm
-
-Lunch Break.
-
-Pushed evals and update docs at around 2pm
-
-Sent email right after
+- **Retrieval is the weak link.** Recall@5 is 20/30. Hybrid retrieval beat BM25 by 4 cases when it
+  was added, but on the current data the two are level; follow-ups that need date reasoning ("And
+  before that?") are missed, and the follow-up rewrite varies from run to run.
+- **`mustNotClaim` is substring matching**: blind to negation (every flag so far was a correct
+  refusal quoting the claim) and to paraphrase. A tripwire, not a test.
+- **LinkedIn gives little.** Logged-out profiles are masked; masked values are discarded, never
+  stored.
+- **Admin sign-in throttling is per server instance**; a long random `ADMIN_PASSWORD` is the real
+  protection. Invite redemption is throttled through the database.
 
 ## Repository map
 
@@ -262,11 +206,29 @@ data/conflicts.json           known disagreements, as data
 lib/sources/                  one adapter per source, behind one interface
 lib/db/                       Postgres schema, client and knowledge store
 drizzle/                      committed SQL migrations
-lib/retrieval.ts              BM25 + conflict force-inclusion
+lib/retrieval.ts              BM25 + embeddings (RRF) + conflict force-inclusion
+lib/embeddings.ts             local embedding model (bge-small, via transformers.js)
+lib/resume/                   PDF/DOCX/Markdown resume -> checked units (the ingest guard)
+lib/llm/                      provider interface: Anthropic and any OpenAI-compatible API
+lib/conversation.ts           follow-up rewriting; history as context, never a source
+lib/memory.ts                 conversations, suggested questions, retention
+lib/access.ts                 invite codes and the access gate
+app/admin/                    the owner's page: resume upload, invites, suggestions
 lib/generation.ts             the system prompt and the structured call
 lib/guard.ts                  the enforcement point
 lib/fallback.ts               every refusal the user can see
 lib/pipeline.ts               ask() — the single entry point, used by the UI and the eval alike
-eval/dataset.jsonl            24 labelled cases
+eval/dataset.jsonl            40 labelled cases, each set committed before its feature
 eval/results/                 committed run output
 ```
+
+## How this was built
+
+It started as a take-home exercise for a lead engineer role and grew in phases from there, each
+planned, measured and committed before the next. The original write-up, and what changed since:
+**[docs/origin.md](docs/origin.md)**. Design decisions: **[docs/decisions.md](docs/decisions.md)**,
+**[docs/architecture.md](docs/architecture.md)**.
+
+## License
+
+MIT. See [LICENSE](LICENSE).

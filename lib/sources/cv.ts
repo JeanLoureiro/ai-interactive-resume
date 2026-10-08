@@ -119,7 +119,7 @@ export function isContractMarkdown(raw: string): boolean {
 }
 
 /** Entry metadata kept as text at the top of the unit, in this order. */
-const TEXT_META_KEYS = ["Role", "Location", "Status"] as const;
+const TEXT_META_KEYS = ["Role", "Engagement", "Location", "Status"] as const;
 
 /** Parses a CV written in the format contract. No model, no guard needed: a human wrote it. */
 export function parseContractMarkdown(raw: string, retrievedAt: string): KnowledgeUnit[] {
@@ -161,9 +161,9 @@ export function parseContractMarkdown(raw: string, retrievedAt: string): Knowled
       const employer = entry.meta.get("Employer");
       const dates = entry.meta.get("Dates");
       const link = entry.meta.get("Link");
-      // Role, Location and Status have no field of their own, so they lead the text. They used to be
-      // parsed and then dropped, which hid every project role ("Forward Deployed Engineer") from
-      // the assistant.
+      // Role, Engagement, Location and Status have no field of their own, so they lead the text.
+      // They used to be parsed and then dropped, which hid every project role ("Forward Deployed
+      // Engineer") from the assistant.
       const facts = TEXT_META_KEYS.flatMap((key) => {
         const value = entry.meta.get(key);
         return value ? [`${key}: ${value}`] : [];

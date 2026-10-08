@@ -113,6 +113,15 @@ export interface SemanticInput {
   minSimilarity: number;
 }
 
+/**
+ * Weight on a public GitHub repository's score. Repository units are thin metadata ("Public GitHub
+ * repository X. Primary language: Y.") and there are many of them, so on a technology question they
+ * crowded CV units out of the top k: asked "Does Jean know React?", the top 5 was tutorial repos
+ * named after React and the CV's React roles were missing. Below 1, a repository wins only when
+ * nothing from the CV or LinkedIn is close. Set by measurement (docs/evaluation.md).
+ */
+const REPOSITORY_WEIGHT = 0.5;
+
 /** How many candidates each ranking contributes to the fusion. */
 const CANDIDATES = 20;
 /** The standard Reciprocal Rank Fusion constant: dampens the advantage of the very top ranks. */
@@ -175,7 +184,10 @@ function fuse(...rankings: ScoredUnit[][]): ScoredUnit[] {
  */
 export function retrieve(kb: KnowledgeBase, query: string, topK = 5, semantic?: SemanticInput): RetrievalResult {
   const lexical = bm25Rank(kb, query);
-  const ranked = (semantic ? fuse(lexical, vectorRank(kb, semantic)) : lexical).slice(0, topK);
+  const ranked = (semantic ? fuse(lexical, vectorRank(kb, semantic)) : lexical)
+    .map((scored) => (scored.unit.unitType === "repository" ? { ...scored, score: scored.score * REPOSITORY_WEIGHT } : scored))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, topK);
 
   const { conflictsByUnitId, byId } = kb;
   const selected = new Map<string, KnowledgeUnit>(ranked.map(({ unit }) => [unit.id, unit]));

@@ -459,3 +459,31 @@ tutorial repositories (their names contain "React") instead of the CV's frontend
 and the model answered that Jean has worked with React "only as learning work". That breaks the
 prompt's own rule that absence of evidence is not evidence of absence. It predates memory; it
 should become an eval case before retrieval or the prompt is changed for it.
+
+## Before launch: fixes found in manual testing
+
+Two answers a recruiter would have seen were wrong, and both now have cases.
+
+**"Does Jean know React?" (H1, with H2 Python and H3 Azure as siblings).** Retrieval ranked GitHub
+tutorial repositories named after React above the CV, and the model concluded React was "only
+learning work". Two changes, each measured: a prompt rule (do not judge the extent of experience
+from what is missing, since other records may not have been supplied), and a weight of 0.5 on
+repository units in the final ranking, because 18 thin repository records crowded CV units out of
+the top 5. Any weight up to 0.7 fixed H1 and changed no other case. H1 now answers "Yes. React
+appears in Jean's CV skills…" with the Localsearch and SeaportOPX roles.
+
+**"Where does Jean work now?" (B1).** After LinkedIn updated and the CV's Role lines became visible,
+the model described two client projects as current employment. The CV now states the current
+position in the owner's words, and the client projects carry an "Engagement: client project, on
+contract" line. B1 now answers that Jean is open to new full-time roles since the KPMG role ended in
+August 2026, while building AI products for clients on contract.
+
+Final run, Sonnet 5.5, 40 cases: citations 40/40, refusals 9/9, conflict surfacing 3/4, recall@5
+20/30, four must-not-claim flags, all refusals quoting the claim they refuse.
+
+**What got worse, and is being shipped knowingly.** The data changes (live LinkedIn and GitHub, CV
+Role lines, current-position line) shifted retrieval: hybrid's lead over BM25 went from 4 cases to
+none, paraphrases fell from 6/8 to 4/8, and C1 (project dates overlapping KPMG) is no longer
+retrieved, so its conflict is not surfaced. The owner chose to launch with hybrid retrieval and
+document this rather than tune on a small corpus. The follow-up rewrite also varies run to run, so
+follow-up recall moves between 1/4 and 2/4.

@@ -59,6 +59,12 @@ adapter drops anything masked and records the masking itself as a unit
 (`linkedin:masking-limitation`), so the system can say *this source cannot see that* rather than
 implying the record is empty.
 
+**Past employers on LinkedIn are not education.** LinkedIn's structured data lists past employers
+and schools in the same `alumniOf` list, distinguished only by type: `EducationalOrganization` is a
+school, `Organization` an employer. Reading every entry as education once produced "Education: KPMG
+Australia". Past employers now become `linkedin:past-organisation-*` employment units, and a
+profile with no current employer says so in `linkedin:no-current-employer`.
+
 **Dates are taken verbatim or left absent.** Inferring a missing month is the same class of
 fabrication as inferring an employer. Where the CV gives a year with no month (Marketing Triage),
 the transcription says so explicitly.

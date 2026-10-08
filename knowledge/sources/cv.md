@@ -23,6 +23,8 @@ unit, never the surrounding page.
 
 **Title:** Senior AI Engineer
 
+**Current position:** Since the KPMG role ended in August 2026, Jean is open to new full-time roles, while building AI products for clients on contract.
+
 **Location:** Gold Coast, QLD, Australia
 
 **LinkedIn:** linkedin.com/in/jeanloureiro
@@ -184,6 +186,7 @@ application.
 ### Marketing Triage, EC Pohl & Co
 
 **Employer:** EC Pohl & Co
+**Engagement:** client project, on contract
 **Dates:** 2026-01 .. present
 **Role:** AI Engineer
 **Status:** in test, launching shortly
@@ -201,6 +204,7 @@ in the source.
 ### Pohly — private wealth client portal
 
 **Employer:** EC Pohl & Co
+**Engagement:** client project, on contract
 **Dates:** 2025-11 .. present
 **Role:** Forward Deployed Engineer
 **Link:** portal.ecpohl.com
