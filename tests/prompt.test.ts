@@ -21,6 +21,14 @@ describe("the prompt", () => {
     }
   });
 
+  it("never shows an id from earlier turns, which are not this turn's sources", () => {
+    const { units, conflicts } = retrieve(kb, "What did Jean do at SeaportOPX?", 5);
+    const supplied = new Set(units.map((unit) => unit.id));
+    const history = [{ question: "Tell me about cv:financial-sanity", answer: "See github:repo-jdump and cv:the-clubhouse-poker." }];
+    const shown = buildUserPrompt("And before that?", units, conflicts, history).match(UNIT_ID) ?? [];
+    expect(shown.filter((id) => !supplied.has(id))).toEqual([]);
+  });
+
   it("still states a disagreement whose other side was not supplied", () => {
     const [conflict] = kb.conflicts;
     const oneSide = [kb.byId.get(conflict!.unitIds[0]!)!];

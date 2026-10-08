@@ -1,6 +1,8 @@
 import { timingSafeEqual } from "node:crypto";
 import { sql } from "drizzle-orm";
+import { getRetentionDays } from "@/lib/config";
 import { getDb, isDatabaseConfigured } from "@/lib/db/client";
+import { purgeExpired } from "@/lib/memory";
 
 export const runtime = "nodejs";
 
@@ -15,10 +17,11 @@ function hasValidSecret(request: Request): boolean {
 }
 
 /**
- * Daily query that keeps a free Supabase project from pausing after 7 idle days.
+ * Daily maintenance, called by Vercel Cron (vercel.json) with `Authorization: Bearer $CRON_SECRET`:
  *
- * Called by Vercel Cron (vercel.json), which sends `Authorization: Bearer $CRON_SECRET`. Any Postgres
- * works; on hosts that never pause it is a harmless `select 1`.
+ * - a query, which keeps a free Supabase project from pausing after 7 idle days (harmless elsewhere);
+ * - retention: conversations older than CONVERSATION_RETENTION_DAYS, unapproved visitor questions
+ *   of the same age, and rate-limit rows older than a day are deleted.
  */
 export async function GET(request: Request): Promise<Response> {
   if (!hasValidSecret(request)) {
@@ -29,10 +32,11 @@ export async function GET(request: Request): Promise<Response> {
   }
   try {
     await getDb().execute(sql`select 1`);
+    await purgeExpired(getDb(), getRetentionDays());
     return Response.json({ ok: true, database: "reachable" });
   } catch (error) {
     // Logged, and surfaced as a 503 so the failure shows up in Vercel's cron logs.
-    console.error("keepalive query failed:", error);
+    console.error("daily maintenance failed:", error);
     return Response.json({ ok: false, database: "unreachable" }, { status: 503 });
   }
 }

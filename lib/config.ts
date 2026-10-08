@@ -146,7 +146,16 @@ export function describeSources(subject: Subject): string {
  * On another provider it defaults to the answering model, since a Claude model id would not exist there.
  */
 export function getResumeModel(): string {
-  const configured = env("RESUME_MODEL");
+  return env("RESUME_MODEL") ?? getFastModel();
+}
+
+/**
+ * A cheaper, faster model for mechanical tasks: structuring a resume, rewriting a follow-up into a
+ * standalone search query. claude-haiku-4-5 on Anthropic; the answering model elsewhere, since a
+ * Claude model id would not exist on another provider. FAST_MODEL overrides it.
+ */
+export function getFastModel(): string {
+  const configured = env("FAST_MODEL");
   if (configured) return configured;
   return (env("LLM_PROVIDER") ?? "anthropic") === "anthropic" ? "claude-haiku-4-5" : getModel();
 }
@@ -161,4 +170,16 @@ export type RetrievalMode = "hybrid" | "bm25";
 /** Hybrid by default: it met every bar in docs/evaluation.md. `bm25` turns the embedding model off. */
 export function getRetrievalMode(): RetrievalMode {
   return process.env["RETRIEVAL_MODE"]?.trim() === "bm25" ? "bm25" : "hybrid";
+}
+
+/** Questions per visitor per hour on /api/ask. */
+export function getRateLimitPerHour(): number {
+  const parsed = Number.parseInt(process.env["RATE_LIMIT_PER_HOUR"] ?? "", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 30;
+}
+
+/** How long conversations, and unapproved visitor questions, are kept. */
+export function getRetentionDays(): number {
+  const parsed = Number.parseInt(process.env["CONVERSATION_RETENTION_DAYS"] ?? "", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 90;
 }

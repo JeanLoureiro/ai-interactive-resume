@@ -3,7 +3,9 @@ import { retrieve } from "./retrieval";
 import { generate, GenerationError } from "./generation";
 import { checkCitations } from "./guard";
 import * as fallback from "./fallback";
-import { costUsd, getModel, getRetrievalMode, getTopK } from "./config";
+import { costUsd, getFastModel, getModel, getRetrievalMode, getTopK } from "./config";
+import { followUpQuery, type ConversationTurn } from "./conversation";
+import { getLlmProvider } from "./llm";
 import { semanticInput } from "./embeddings";
 import type { AssistantResponse } from "./models";
 
@@ -18,6 +20,11 @@ export interface AskOptions {
    * that matter most here and the ones hardest to trigger against a live API on demand.
    */
   generateFn?: typeof generate;
+  /**
+   * Earlier turns of this conversation, loaded server-side. Used to understand a follow-up, never
+   * as a source: the guard still accepts only units retrieved for this turn.
+   */
+  history?: ConversationTurn[];
 }
 
 /**
@@ -29,9 +36,13 @@ export interface AskOptions {
 export async function ask(question: string, options: AskOptions = {}): Promise<AssistantResponse> {
   const model = options.model ?? getModel();
   const startedAt = Date.now();
+  const history = options.history ?? [];
   const kb = await getKnowledgeBase();
-  const semantic = getRetrievalMode() === "hybrid" ? await semanticInput(kb, question) : undefined;
-  const { units, conflicts, ranked } = retrieve(kb, question, options.topK ?? getTopK(), semantic);
+  // A follow-up is searched as a standalone question ("And before that?" -> "What did Jean do before
+  // KPMG?"). The rewrite is for retrieval only; the model below still answers the visitor's words.
+  const query = await followUpQuery(question, history, getLlmProvider, getFastModel());
+  const semantic = getRetrievalMode() === "hybrid" ? await semanticInput(kb, query) : undefined;
+  const { units, conflicts, ranked } = retrieve(kb, query, options.topK ?? getTopK(), semantic);
   const rankedSourceIds = ranked.map(({ unit }) => unit.id);
 
   const base = {
@@ -61,7 +72,7 @@ export async function ask(question: string, options: AskOptions = {}): Promise<A
   }
 
   try {
-    const result = await (options.generateFn ?? generate)(question, units, conflicts, model);
+    const result = await (options.generateFn ?? generate)(question, units, conflicts, model, history);
     const guard = checkCitations(result.answer, units);
     const diagnostics = {
       model: result.model,

@@ -6,6 +6,7 @@ import { diffCvUnits, getDraft } from "@/lib/admin/drafts";
 import { getDb, isDatabaseConfigured } from "@/lib/db/client";
 import { createPostgresKnowledgeStore } from "@/lib/db/knowledge-store";
 import { buildKnowledgeBase } from "@/lib/knowledge";
+import { listSuggestions } from "@/lib/memory";
 import { AdminDashboard } from "./admin-dashboard";
 import { AdminLogin } from "./admin-login";
 import styles from "./admin.module.css";
@@ -31,12 +32,17 @@ export default async function AdminPage() {
   }
 
   const db = getDb();
-  const [draft, live] = await Promise.all([getDraft(db), createPostgresKnowledgeStore(db).load().then(buildKnowledgeBase)]);
+  const [draft, live, suggestions] = await Promise.all([
+    getDraft(db),
+    createPostgresKnowledgeStore(db).load().then(buildKnowledgeBase),
+    listSuggestions(db, { approvedOnly: false }),
+  ]);
   const liveCv = live.units.filter((unit) => unit.source === "cv");
 
   return (
     <AdminDashboard
       liveCvCount={liveCv.length}
+      suggestions={suggestions}
       draft={
         draft && {
           fileName: draft.fileName,

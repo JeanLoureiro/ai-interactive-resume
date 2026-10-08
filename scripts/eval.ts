@@ -80,7 +80,7 @@ async function main(): Promise<void> {
   // Sequential on purpose. Running these concurrently would contend for the same rate limit and
   // inflate the per-question latency we are trying to measure.
   for (const testCase of cases) {
-    const response = await ask(testCase.question, { model });
+    const response = await ask(testCase.question, { model, history: testCase.history ?? [] });
     const answerLower = response.answerText.toLowerCase();
     const citedSourceIds = [
       ...new Set(response.claims.flatMap((claim) => claim.sources.map((s) => s.id))),

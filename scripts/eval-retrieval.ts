@@ -1,6 +1,6 @@
 /**
- * Retrieval-only eval: recall@5 on every case with gold ids, per retrieval mode. No model call,
- * no API key, $0, so it can run on every change to retrieval.
+ * Retrieval-only eval: recall@5 on every case with gold ids, per retrieval mode. The only model calls
+ * are the follow-up rewrites (a handful of fast-model calls); everything else is local and free.
  *
  *   pnpm eval:retrieval
  *
@@ -11,6 +11,9 @@ import { buildKnowledgeBase } from "../lib/knowledge";
 import { jsonKnowledgeStore } from "../lib/db/knowledge-store";
 import { retrieve } from "../lib/retrieval";
 import { EMBEDDING_MODEL, semanticInput } from "../lib/embeddings";
+import { followUpQuery } from "../lib/conversation";
+import { getFastModel } from "../lib/config";
+import { getLlmProvider } from "../lib/llm";
 import { loadDataset, type EvalCase } from "./dataset";
 
 const TOP_K = 5;
@@ -40,7 +43,11 @@ async function main(): Promise<void> {
     const hits = new Set<string>();
     const misses: EvalCase[] = [];
     for (const testCase of cases) {
-      const ids = await rankedIds(mode, kb, testCase.question);
+      // Follow-ups are retrieved the way the app does it: rewritten into a standalone question by the
+      // fast model (the only part of this eval that calls a model; a few cents of Haiku at most).
+      const query = await followUpQuery(testCase.question, testCase.history ?? [], getLlmProvider, getFastModel());
+      if (testCase.history?.length && mode === "hybrid") console.log(`  ${testCase.id} searched as: ${query.replace(/\n/g, " / ")}`);
+      const ids = await rankedIds(mode, kb, query);
       if (testCase.goldSourceIds.some((id) => ids.includes(id))) hits.add(testCase.id);
       else misses.push(testCase);
     }
@@ -67,6 +74,11 @@ async function main(): Promise<void> {
   ] as const;
   console.log("\nBARS FOR HYBRID AS DEFAULT");
   for (const [label, met] of bars) console.log(`  ${met ? "met " : "MISS"}  ${label}`);
+
+  const followUps = cases.filter((c) => c.category === "follow_up");
+  const followUpHits = followUps.filter((c) => hybrid.has(c.id)).length;
+  console.log("\nBAR FOR CONVERSATION MEMORY");
+  console.log(`  ${followUpHits >= 3 ? "met " : "MISS"}  hybrid finds at least 3 of ${followUps.length} follow-ups (${followUpHits})`);
 }
 
 main().catch((error: unknown) => {

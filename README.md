@@ -32,7 +32,8 @@ pnpm db:setup                     # create the tables, then ingest into them
 ```
 
 On a free Supabase project, set `CRON_SECRET` too: `vercel.json` schedules a daily
-`/api/cron/keepalive` query so the project is never idle long enough to pause.
+`/api/cron/daily` query so the project is never idle long enough to pause; the same job deletes
+conversations older than the retention period.
 
 Or from the terminal, which shows the same information without the browser:
 
@@ -72,6 +73,11 @@ Out of the box this answers about Jean, as a worked example. To point it at some
 3. Delete or rewrite `knowledge/sources/github-note.md` and set `data/conflicts.json` to `[]`.
    Both describe Jean.
 4. Run `pnpm ingest` (or `pnpm db:setup` with a database), then `pnpm dev`.
+
+**Conversation memory and suggestions** need a database: follow-up questions then understand the
+conversation, and `/admin` lets you curate the suggested questions shown under the question box,
+including ones visitors asked, which appear only after you approve them. Without a database each
+question stands alone.
 
 **Updating it later without a terminal:** set `ADMIN_PASSWORD` (and a database) and open `/admin`.
 Upload a new resume, review every new, changed and removed unit plus every line the guard dropped,

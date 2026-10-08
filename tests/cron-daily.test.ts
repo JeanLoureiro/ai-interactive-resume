@@ -1,14 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { GET } from "../app/api/cron/keepalive/route";
+import { GET } from "../app/api/cron/daily/route";
 
 const call = (authorization?: string) =>
-  GET(new Request("http://localhost/api/cron/keepalive", authorization ? { headers: { authorization } } : {}));
+  GET(new Request("http://localhost/api/cron/daily", authorization ? { headers: { authorization } } : {}));
 
 afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-describe("keep-alive cron route", () => {
+describe("daily cron route", () => {
   it("rejects every request when CRON_SECRET is not configured", async () => {
     vi.stubEnv("CRON_SECRET", "");
     expect((await call("Bearer ")).status).toBe(401);

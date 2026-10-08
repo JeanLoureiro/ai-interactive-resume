@@ -15,6 +15,13 @@
       "when": 1791354889767,
       "tag": "0001_knowledge_drafts",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791423613049,
+      "tag": "0002_conversations",
+      "breakpoints": true
     }
   ]
 }

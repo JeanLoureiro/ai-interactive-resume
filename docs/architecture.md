@@ -95,6 +95,23 @@ cap is applied in rank order, so the best-matching units' conflicts win the budg
 partner units do not fit still contributes its resolution note — the disagreement is never silently
 dropped, only its citable units.
 
+## Conversation memory
+
+With a database, `/api/ask` gives each visitor an anonymous conversation id in an httpOnly cookie
+and loads the last 6 turns server-side (`lib/memory.ts`). The browser never sends history, so a
+visitor cannot forge an earlier turn. Without a database each question stands alone.
+
+A follow-up is rewritten by the fast model into a standalone question for retrieval only
+(`followUpQuery` in `lib/conversation.ts`); the answering model still sees the visitor's words.
+Earlier turns go into the prompt as "context only, never a source", with anything shaped like a unit
+id masked, and the system prompt says the same. The guard is unchanged: every citation must be a
+unit retrieved for this turn. Measured results, including what memory still misses, are in
+`docs/evaluation.md`.
+
+Suggested questions come from the owner, plus visitor questions that were asked on their own (not
+as follow-ups) and answered from sources. A visitor's question is shown to others only after the
+owner approves it in `/admin`.
+
 ## How prompting works, concretely
 
 `lib/generation.ts`. One call to `client.messages.parse()` with `output_config.format` bound to a
@@ -210,6 +227,12 @@ refusal would read as a fact about Jean rather than a fact about the network.
   transcription time rather than filtered at runtime. There is nothing to leak. Asserted by test.
 - **Exposure.** The deployment sits behind Vercel Deployment Protection, so the endpoint is not an
   open, credit-burning prompt-injection target. Input is capped at 2000 characters.
+- **Visitors and retention.** Visitors are anonymous: a random conversation id in an httpOnly
+  cookie, no login. Questions are rate-limited per visitor per hour (`RATE_LIMIT_PER_HOUR`, shared
+  across instances through Postgres); the limit stores a hash of the address with the hour, never
+  the address, and those rows are deleted within a day. Conversations and unapproved visitor
+  questions are deleted after `CONVERSATION_RETENTION_DAYS` (90) by the daily cron, and the page says
+  so under the question box.
 - **Uploaded resumes.** `/admin` exists only when `ADMIN_PASSWORD` is set; otherwise every admin
   route is a 404. The password is compared in constant time, the session is a signed, expiring,
   httpOnly, `SameSite=Strict` cookie keyed from the password (changing it signs everyone out), and

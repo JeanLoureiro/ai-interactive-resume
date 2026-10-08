@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { UnitDiff } from "@/lib/admin/drafts";
 import type { KnowledgeUnit } from "@/lib/models";
+import type { Suggestion } from "@/lib/memory";
 import type { ResumeReport } from "@/lib/resume";
 import styles from "./admin.module.css";
 
@@ -15,7 +16,8 @@ export interface DraftSummary {
 }
 
 async function post(path: string, body?: BodyInit): Promise<{ ok: boolean; error?: string }> {
-  const response = await fetch(path, { method: "POST", body }).catch(() => null);
+  const headers = typeof body === "string" ? { "content-type": "application/json" } : undefined;
+  const response = await fetch(path, { method: "POST", body, ...(headers ? { headers } : {}) }).catch(() => null);
   if (!response) return { ok: false, error: "Could not reach the server." };
   const json = (await response.json().catch(() => ({}))) as { error?: string };
   return { ok: response.ok, ...(json.error ? { error: json.error } : {}) };
@@ -41,14 +43,77 @@ function UnitList({ title, units }: { title: string; units: KnowledgeUnit[] }) {
   );
 }
 
-export function AdminDashboard({ liveCvCount, draft }: { liveCvCount: number; draft: DraftSummary | undefined }) {
+function SuggestionsSection({ suggestions, act }: { suggestions: Suggestion[]; act: (body: object) => void }) {
+  const [text, setText] = useState("");
+  const pending = suggestions.filter((suggestion) => !suggestion.approved);
+  const shown = suggestions.filter((suggestion) => suggestion.approved);
+  return (
+    <section className={styles.card}>
+      <h2 className={styles.h2}>Suggested questions</h2>
+      <p className={styles.muted}>
+        Shown as chips under the question box, most asked first. Visitors&apos; questions appear here only when they
+        were answered from sources, and are shown to others only after you approve them.
+      </p>
+      <form
+        className={styles.row}
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (text.trim()) act({ action: "add", text });
+          setText("");
+        }}
+      >
+        <input className={styles.input} aria-label="New suggested question" placeholder="Add your own suggested question" value={text} onChange={(event) => setText(event.target.value)} maxLength={300} />
+        <button className={styles.button} type="submit" disabled={!text.trim()}>
+          Add
+        </button>
+      </form>
+      <h3 className={styles.h3}>Waiting for approval ({pending.length})</h3>
+      {pending.length === 0 && <p className={styles.muted}>Nothing waiting.</p>}
+      {pending.map((suggestion) => (
+        <div key={suggestion.id} className={styles.suggestion}>
+          <span>
+            {suggestion.text} <span className={styles.muted}>· asked {suggestion.timesAsked}×</span>
+          </span>
+          <span className={styles.row}>
+            <button className={styles.ghost} type="button" onClick={() => act({ action: "approve", id: suggestion.id })}>Approve</button>
+            <button className={styles.ghost} type="button" onClick={() => act({ action: "remove", id: suggestion.id })}>Remove</button>
+          </span>
+        </div>
+      ))}
+      <h3 className={styles.h3}>Shown to visitors ({shown.length})</h3>
+      {shown.map((suggestion) => (
+        <div key={suggestion.id} className={styles.suggestion}>
+          <span>
+            {suggestion.text} <span className={styles.muted}>· {suggestion.origin === "owner" ? "yours" : `asked ${suggestion.timesAsked}×`}</span>
+          </span>
+          <span className={styles.row}>
+            {suggestion.origin === "visitor" && (
+              <button className={styles.ghost} type="button" onClick={() => act({ action: "hide", id: suggestion.id })}>Hide</button>
+            )}
+            <button className={styles.ghost} type="button" onClick={() => act({ action: "remove", id: suggestion.id })}>Remove</button>
+          </span>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+export function AdminDashboard({
+  liveCvCount,
+  draft,
+  suggestions,
+}: {
+  liveCvCount: number;
+  draft: DraftSummary | undefined;
+  suggestions: Suggestion[];
+}) {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
-  const [busy, setBusy] = useState<"upload" | "publish" | "discard" | null>(null);
+  const [busy, setBusy] = useState<"upload" | "publish" | "discard" | "suggest" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  async function run(action: "upload" | "publish" | "discard", path: string, body?: BodyInit, success?: string) {
+  async function run(action: "upload" | "publish" | "discard" | "suggest", path: string, body?: BodyInit, success?: string) {
     setBusy(action);
     setError(null);
     setNotice(null);
@@ -106,6 +171,8 @@ export function AdminDashboard({ liveCvCount, draft }: { liveCvCount: number; dr
 
       {error && <p className={styles.error}>{error}</p>}
       {notice && <p className={styles.success}>{notice}</p>}
+
+      <SuggestionsSection suggestions={suggestions} act={(body) => void run("suggest", "/api/admin/suggestions", JSON.stringify(body))} />
 
       {draft && report && (
         <section className={styles.card}>

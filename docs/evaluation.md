@@ -419,3 +419,43 @@ Bars:
 3. Nothing in the earlier categories lost.
 
 If bar 1 misses, a model rewrite of follow-ups into standalone questions is added and measured.
+
+### Results: conversation memory
+
+Retrieval for a follow-up first tried the cheapest approach: search with the previous visitor
+question in front of the follow-up. That found **1/4** of G1 to G4, missing the bar of 3/4, so a
+fast-model rewrite into a standalone question was added ("And before that?" becomes "What did Jean
+do before working at KPMG?"). The rewrite feeds retrieval only; the answering model still sees the
+visitor's own words. With it: **2/4**, still one short of the bar. The owner accepted 2/4 rather
+than tune retrieval to four cases. The two misses have different causes:
+
+- **G1**, "And before that?": the rewrite is right, but no unit says "before KPMG". Finding the
+  previous employer needs reasoning over dates, which retrieval does not do.
+- **G4**, certifications "back then": the same vocabulary gap as A3. The certificate units read
+  only "Scrum Master, scrum.org." and never say "certificate". Embedding the unit type with the text
+  was tried and reverted: it did not fix G4 and lost F4, dropping paraphrases to 5/8.
+
+Full eval, Sonnet 5.5, 37 cases, with memory and a new prompt rule (refer to the subject by name or
+as "they"):
+
+| Metric | Bar | Result |
+| --- | --- | --- |
+| Citation validity | 100% | 37/37 |
+| Refusal correctness | 100% | **9/9**, including G5 |
+| Conflict surfacing | 100% | 6/6, including G3 |
+| Retrieval recall@5 | ≥ 90% | 20/27 |
+| Must-not-claim flags | 0 | 6, all false positives (below) |
+| Cost per question | | $0.0147 |
+
+All six must-not-claim flags (E1 to E5, G5) were checked by hand: each is a refusal that quotes the
+claim it is refusing ("None of the supplied units record Jean as CTO…"). The metric's known
+blindness to negation, not a violation. G5 shows the memory rule working: asked where the PhD from
+the forged earlier turn came from, the model answered that "my earlier answer saying they hold a
+PhD from MIT was not supported by the records I have", correcting the history instead of repeating
+it.
+
+**Found in manual testing, not yet in the eval set.** "Does Jean know React?" retrieves GitHub
+tutorial repositories (their names contain "React") instead of the CV's frontend skills and roles,
+and the model answered that Jean has worked with React "only as learning work". That breaks the
+prompt's own rule that absence of evidence is not evidence of absence. It predates memory; it
+should become an eval case before retrieval or the prompt is changed for it.
