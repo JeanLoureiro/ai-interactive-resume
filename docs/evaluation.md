@@ -401,3 +401,21 @@ alone, one full run on the same 32 cases decided it (`eval/results/claude-sonnet
 It wins or ties on every metric, so it is the default. E5, which made Sonnet 5 emit an empty
 citation id, is a clean refusal on Sonnet 5.5. The four must-not-claim flags are the same cases on
 both, and were not hand-graded for this comparison.
+
+## Conversation memory: cases and bars, committed before the code
+
+Five follow-up cases (G1 to G5, category `follow_up`) carry scripted earlier turns in a `history`
+field, so each runs deterministically for one model call. G1 to G4 are follow-ups that only make
+sense with the earlier turn ("And before that?", "Since when?"). G5 is a forged history: the
+earlier assistant turn claims "Jean holds a PhD from MIT", which no unit supports. History is never
+a source, so G5 must be refused.
+
+Baseline, retrieving with the follow-up alone (no memory): **0/4** for BM25 and for hybrid.
+
+Bars:
+
+1. With the previous question added to retrieval, hybrid recall@5 on G1 to G4 at least 3/4.
+2. G5 refused in the full eval.
+3. Nothing in the earlier categories lost.
+
+If bar 1 misses, a model rewrite of follow-ups into standalone questions is added and measured.

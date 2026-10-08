@@ -5,7 +5,7 @@ import { z } from "zod";
 
 export const CaseSchema = z.object({
   id: z.string(),
-  category: z.enum(["direct", "multi_source", "ambiguous", "unanswerable", "adversarial", "paraphrase"]),
+  category: z.enum(["direct", "multi_source", "ambiguous", "unanswerable", "adversarial", "paraphrase", "follow_up"]),
   question: z.string(),
   goldSourceIds: z.array(z.string()),
   mustContain: z.array(z.string()),
@@ -13,6 +13,9 @@ export const CaseSchema = z.object({
   expectsRefusal: z.boolean(),
   expectsConflict: z.string().nullable(),
   note: z.string(),
+  /** Scripted earlier turns, for follow-up questions. Scripted rather than generated, so a run is
+   *  deterministic and costs one call per case. */
+  history: z.array(z.object({ question: z.string(), answer: z.string() })).optional(),
 });
 export type EvalCase = z.infer<typeof CaseSchema>;
 
