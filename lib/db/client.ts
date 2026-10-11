@@ -13,20 +13,12 @@ export function isDatabaseConfigured(): boolean {
 let db: ReturnType<typeof createDb> | undefined;
 
 function createDb(url: string) {
-  // Supabase's transaction pooler (the serverless URL) rejects two things a direct Postgres accepts:
-  // prepared statements, and pipelined queries. prepare: false covers the first. max_pipeline: 1
-  // covers the second — several queries in flight on one connection never complete there, so a page
-  // that loads the dashboard with Promise.all runs until the function is killed. max: 1 keeps each
-  // serverless instance to a single pooled connection. On a direct connection the same queries
-  // still run, one at a time.
-  return drizzle(
-    postgres(url, {
-      prepare: false,
-      max: 1,
-      // One query in flight. The published types omit this; the runtime reads it.
-      max_pipeline: 1,
-    } as postgres.Options<Record<string, never>>),
-  );
+  // Use Supabase's session pooler (port 5432), not the transaction pooler (port 6543). Through the
+  // transaction pooler, concurrent queries on one connection (the Promise.all in /api/status and
+  // /admin) leave it hung until the function is killed, and limiting postgres.js to one query in
+  // flight does not prevent it. prepare: false keeps a transaction-pooler URL from failing outright.
+  // max: 1 keeps each serverless instance to a single pooled connection.
+  return drizzle(postgres(url, { prepare: false, max: 1 }));
 }
 
 /** One client per process. Throws when DATABASE_URL is unset; callers check first. */
