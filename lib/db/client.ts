@@ -13,11 +13,20 @@ export function isDatabaseConfigured(): boolean {
 let db: ReturnType<typeof createDb> | undefined;
 
 function createDb(url: string) {
-  // prepare: false because Supabase's transaction pooler (the serverless-friendly URL) does not
-  // support prepared statements; it costs nothing on a direct connection. max: 1 keeps each
-  // serverless instance to a single pooled connection. That is enough while the only query is the
-  // once-per-instance knowledge load; revisit when per-request queries arrive (conversations).
-  return drizzle(postgres(url, { prepare: false, max: 1 }));
+  // Supabase's transaction pooler (the serverless URL) rejects two things a direct Postgres accepts:
+  // prepared statements, and pipelined queries. prepare: false covers the first. max_pipeline: 1
+  // covers the second — several queries in flight on one connection never complete there, so a page
+  // that loads the dashboard with Promise.all runs until the function is killed. max: 1 keeps each
+  // serverless instance to a single pooled connection. On a direct connection the same queries
+  // still run, one at a time.
+  return drizzle(
+    postgres(url, {
+      prepare: false,
+      max: 1,
+      // One query in flight. The published types omit this; the runtime reads it.
+      max_pipeline: 1,
+    } as postgres.Options<Record<string, never>>),
+  );
 }
 
 /** One client per process. Throws when DATABASE_URL is unset; callers check first. */
