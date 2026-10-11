@@ -3,21 +3,22 @@
  *
  * Run with `pnpm ingest`. Always writes data/knowledge-units.json, the readable snapshot: a reviewer
  * can see exactly what the assistant knows without running anything, and with no DATABASE_URL the
- * app serves it directly. With DATABASE_URL set, the same units and data/conflicts.json also replace
- * the database contents in one transaction.
+ * app serves it directly. A conflict whose units are no longer present is dropped and
+ * data/conflicts.json is rewritten; the rest are kept verbatim. With DATABASE_URL set, the same
+ * units and conflicts replace the database contents in one transaction.
  *
  * `--offline` skips network-backed adapters and keeps their existing units, so a LinkedIn or GitHub
  * outage cannot silently empty the knowledge base.
  */
 import { writeFile, readFile } from "node:fs/promises";
 import path from "node:path";
-import { KnowledgeUnitSchema, type KnowledgeUnit } from "../lib/models";
+import { ConflictSchema, KnowledgeUnitSchema, type KnowledgeUnit } from "../lib/models";
 import type { SourceAdapter } from "../lib/sources/types";
 import { createResumeAdapter, getResumePath } from "../lib/sources/resume";
 import { createLinkedinAdapter } from "../lib/sources/linkedin";
 import { createGithubAdapter } from "../lib/sources/github";
 import { getSubject } from "../lib/config";
-import { buildKnowledgeBase } from "../lib/knowledge";
+import { buildKnowledgeBase, retireDanglingConflicts } from "../lib/knowledge";
 import { closeDb, getDb, isDatabaseConfigured } from "../lib/db/client";
 import { replaceKnowledge } from "../lib/db/knowledge-store";
 
@@ -81,16 +82,30 @@ async function main(): Promise<void> {
   }
 
   const parsed = KnowledgeUnitSchema.array().parse(units);
+  const conflicts = ConflictSchema.array().parse(JSON.parse(await readFile(CONFLICTS, "utf8")) as unknown);
+  const { kept, retired } = retireDanglingConflicts(parsed, conflicts);
+  for (const { conflict, missingUnitIds } of retired) {
+    console.log(`  retired ${conflict.id} (missing ${missingUnitIds.join(", ")})`);
+  }
 
-  // Validated as a whole before anything is written, so a conflict left pointing at a unit that a
-  // source no longer returns stops the ingest here, instead of breaking the app on its next load.
-  const kb = buildKnowledgeBase({
-    units: parsed,
-    conflicts: JSON.parse(await readFile(CONFLICTS, "utf8")) as unknown[],
-  });
+  // Schema parsing above already rejected a malformed conflict. Retirement removed dangling
+  // ids, so this validates the pair that is about to be written.
+  const kb = buildKnowledgeBase({ units: parsed, conflicts: kept });
 
+  // Conflicts first: the kept list is a subset of the previous file, so it still matches the
+  // previous snapshot if the units write fails.
+  if (retired.length > 0) {
+    await writeFile(CONFLICTS, `${JSON.stringify(kept, null, 2)}\n`, "utf8");
+  }
   await writeFile(OUTPUT, `${JSON.stringify(parsed, null, 2)}\n`, "utf8");
   console.log(`\n${parsed.length} units -> ${path.relative(process.cwd(), OUTPUT)}`);
+  if (retired.length > 0) {
+    console.log(
+      `${kept.length} conflicts kept, ${retired.length} retired -> ${path.relative(process.cwd(), CONFLICTS)}`,
+    );
+  } else {
+    console.log(`${kept.length} conflicts, none retired`);
+  }
 
   if (isDatabaseConfigured()) {
     await replaceKnowledge(getDb(), kb.units, kb.conflicts);

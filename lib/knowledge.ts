@@ -1,6 +1,31 @@
 import { ConflictSchema, KnowledgeUnitSchema, type Conflict, type KnowledgeUnit } from "./models";
 import { getKnowledgeStore } from "./db/knowledge-store";
 
+/** A conflict dropped because at least one of its units is no longer in the snapshot. */
+export interface RetiredConflict {
+  conflict: Conflict;
+  missingUnitIds: string[];
+}
+
+/**
+ * Drops a conflict when any unit it names is absent. The rest are returned unchanged, in order.
+ * A partial conflict would disclose a disagreement the sources no longer support.
+ */
+export function retireDanglingConflicts(
+  units: readonly { id: string }[],
+  conflicts: Conflict[],
+): { kept: Conflict[]; retired: RetiredConflict[] } {
+  const ids = new Set(units.map((unit) => unit.id));
+  const kept: Conflict[] = [];
+  const retired: RetiredConflict[] = [];
+  for (const conflict of conflicts) {
+    const missingUnitIds = conflict.unitIds.filter((id) => !ids.has(id));
+    if (missingUnitIds.length > 0) retired.push({ conflict, missingUnitIds });
+    else kept.push(conflict);
+  }
+  return { kept, retired };
+}
+
 export interface KnowledgeBase {
   units: KnowledgeUnit[];
   conflicts: Conflict[];
