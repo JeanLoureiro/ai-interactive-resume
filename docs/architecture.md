@@ -155,10 +155,13 @@ comparison measured the branching too.
 ## How a fact traces back to its source
 
 Each claim carries the ids of the units supporting it. `lib/guard.ts` then checks every id against
-the set supplied for that question. The UI renders each claim with its sources expanded beneath it,
-including the full unit text, so a reader can verify the claim against the evidence without leaving
-the page. The retrieved-but-uncited units are listed too — hiding them would conceal the cases where
-retrieval found the right unit and the model ignored it.
+the set supplied for that question. The page shows the status and the answer by default. A
+checkbox, off until the visitor turns it on and remembered in the browser, reveals the evidence
+trail: disagreements among cited sources, each claim with its sources expanded (including the full
+unit text), units retrieved but not cited, and model diagnostics. When it is on, a reader can verify
+a claim against the evidence without leaving the page. The retrieved-but-uncited units stay in that
+trail, because omitting them would conceal the cases where retrieval found the right unit and the
+model ignored it.
 
 One asymmetry between what the model sees and what the reader sees: the prompt receives **every**
 conflict that force-inclusion triggered, because the model should reason with all of them. The UI

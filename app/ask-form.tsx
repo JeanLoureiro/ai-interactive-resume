@@ -1,17 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { AssistantResponse } from "@/lib/models";
 import styles from "./page.module.css";
 
 /**
- * Sources are rendered expanded, not behind a disclosure.
- *
- * The audience is a reviewer checking whether an answer is grounded, not a consumer who wants a
- * clean chat bubble. Hiding the evidence one click away would optimise for the wrong reader, and
- * the brief is explicit that it would rather see a CLI showing its sources than a polished chat
- * window that does not.
+ * The answer is the default view. Disagreements, claims, retrieved units, and diagnostics sit
+ * behind a checkbox that starts off, so a visitor can read the reply without the evidence trail.
+ * Turning it on renders sources expanded: a reviewer checking whether an answer is grounded should
+ * not have to open each passage individually.
  */
+
+const TECHNICAL_STORAGE_KEY = "show-technical-details";
 
 const STATUS_META: Record<AssistantResponse["status"], { label: string; tone: string; note: string }> = {
   answered: {
@@ -44,8 +44,8 @@ export interface AskFormProps {
   suggestions: string[];
 }
 
-/** One answer, exactly as before: status, answer, disagreements, claims with sources, diagnostics. */
-function ResponseView({ response }: { response: AssistantResponse }) {
+/** One answer: status and text, plus the evidence trail when the visitor has asked to see it. */
+function ResponseView({ response, showTechnical }: { response: AssistantResponse; showTechnical: boolean }) {
   const meta = STATUS_META[response.status];
 
   // Retrieval force-includes every conflict a retrieved unit is party to, which is right for the
@@ -66,7 +66,7 @@ function ResponseView({ response }: { response: AssistantResponse }) {
 
       <p className={styles.answer}>{response.answerText}</p>
 
-      {relevantConflicts.length > 0 && (
+      {showTechnical && relevantConflicts.length > 0 && (
         <div className={styles.conflicts}>
           <h2 className={styles.h2}>Sources disagree here</h2>
           {relevantConflicts.map((conflict) => (
@@ -78,7 +78,7 @@ function ResponseView({ response }: { response: AssistantResponse }) {
         </div>
       )}
 
-      {response.claims.length > 0 && (
+      {showTechnical && response.claims.length > 0 && (
         <div>
           <h2 className={styles.h2}>Claims and their sources</h2>
           {response.claims.map((claim, index) => (
@@ -99,28 +99,32 @@ function ResponseView({ response }: { response: AssistantResponse }) {
         </div>
       )}
 
-      <details className={styles.retrieved}>
-        <summary>
-          Retrieved for this question ({response.retrieved.length}) — including sources the answer
-          did not use
-        </summary>
-        <ul>
-          {response.retrieved.map((unit) => (
-            <li key={unit.id}>
-              <code className={styles.id}>{unit.id}</code> {unit.title}
-            </li>
-          ))}
-        </ul>
-      </details>
+      {showTechnical && (
+        <>
+          <details className={styles.retrieved}>
+            <summary>
+              Retrieved for this question ({response.retrieved.length}) — including sources the answer
+              did not use
+            </summary>
+            <ul>
+              {response.retrieved.map((unit) => (
+                <li key={unit.id}>
+                  <code className={styles.id}>{unit.id}</code> {unit.title}
+                </li>
+              ))}
+            </ul>
+          </details>
 
-      <p className={styles.diag}>
-        {response.diagnostics.model} · {response.diagnostics.latencyMs}ms ·{" "}
-        {response.diagnostics.inputTokens} in / {response.diagnostics.outputTokens} out · $
-        {response.diagnostics.costUsd.toFixed(5)}
-        {response.diagnostics.invalidSourceIds.length > 0 && (
-          <> · rejected citations: {response.diagnostics.invalidSourceIds.join(", ")}</>
-        )}
-      </p>
+          <p className={styles.diag}>
+            {response.diagnostics.model} · {response.diagnostics.latencyMs}ms ·{" "}
+            {response.diagnostics.inputTokens} in / {response.diagnostics.outputTokens} out · $
+            {response.diagnostics.costUsd.toFixed(5)}
+            {response.diagnostics.invalidSourceIds.length > 0 && (
+              <> · rejected citations: {response.diagnostics.invalidSourceIds.join(", ")}</>
+            )}
+          </p>
+        </>
+      )}
     </section>
   );
 }
@@ -213,7 +217,27 @@ export function AskForm({ subjectName, sources, suggestions: defaultSuggestions 
   const [memory, setMemory] = useState<{ enabled: boolean; retentionDays?: number }>({ enabled: false });
   const [suggestions, setSuggestions] = useState(defaultSuggestions);
   const [status, setStatus] = useState<Status | null>(null);
+  const [showTechnical, setShowTechnical] = useState(false);
+  const technicalNoteId = useId();
   const endRef = useRef<HTMLDivElement>(null);
+
+  // Unchecked on a first visit. A later choice is kept in this browser.
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(TECHNICAL_STORAGE_KEY) === "1") setShowTechnical(true);
+    } catch {
+      // Private browsing can reject storage. The checkbox still works for this visit.
+    }
+  }, []);
+
+  function setTechnicalVisible(visible: boolean) {
+    setShowTechnical(visible);
+    try {
+      localStorage.setItem(TECHNICAL_STORAGE_KEY, visible ? "1" : "0");
+    } catch {
+      // Same as above: the choice applies for this visit even if it cannot be stored.
+    }
+  }
 
   // The page is prerendered, so who this visitor is (invited, owner, nobody) is decided here. An
   // invite link carries ?code=; it is redeemed once and removed from the address bar, so it does not
@@ -337,6 +361,22 @@ export function AskForm({ subjectName, sources, suggestions: defaultSuggestions 
 
       {status?.ready && status.access && (
         <>
+          <div className={styles.technicalToggle}>
+            <label className={styles.technicalLabel}>
+              <input
+                type="checkbox"
+                checked={showTechnical}
+                aria-describedby={technicalNoteId}
+                onChange={(event) => setTechnicalVisible(event.target.checked)}
+              />
+              Show technical details
+            </label>
+            <p className={styles.technicalNote} id={technicalNoteId}>
+              Where sources disagree, each claim with the passage behind it, sources retrieved for
+              the question (including ones the answer did not use), and model diagnostics.
+            </p>
+          </div>
+
           {turns.length === 0 && (
             <div className={styles.suggestions}>
               {suggestions.map((suggestion) => (
@@ -357,7 +397,7 @@ export function AskForm({ subjectName, sources, suggestions: defaultSuggestions 
             {turns.map((turn, index) => (
               <div key={index} className={styles.turn}>
                 <p className={styles.question}>{turn.question}</p>
-                <ResponseView response={turn.response} />
+                <ResponseView response={turn.response} showTechnical={showTechnical} />
               </div>
             ))}
             {asking && (
