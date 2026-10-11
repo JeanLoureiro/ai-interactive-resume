@@ -21,3 +21,4 @@ next-env.d.ts
 
 # DOCS
 docs/step-by-step.md
+.env*
