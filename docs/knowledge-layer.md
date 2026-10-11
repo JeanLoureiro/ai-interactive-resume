@@ -94,9 +94,11 @@ Two behaviours in `scripts/ingest.ts` exist for maintenance rather than the happ
 `pnpm ingest --offline` skips the network adapters and keeps their committed units, so a LinkedIn
 outage cannot empty the knowledge base.
 
-Ingest also checks the whole knowledge base, including every conflict's unit ids, **before writing
-anything**. If a source stops returning a unit that `data/conflicts.json` points at, the ingest
-stops with the conflict's id, and both the snapshot and the database keep their previous contents.
+Ingest checks the whole knowledge base, including every conflict's unit ids, **before writing
+anything**. If a source stops returning a unit that a conflict points at, that conflict is dropped
+whole, the retirement is logged with the missing ids, and `data/conflicts.json` is rewritten.
+Conflicts whose units are all still present are copied unchanged. A malformed conflict still stops
+the ingest, and both the snapshot and the database keep their previous contents.
 
 ## Pointing it at someone else
 
@@ -159,9 +161,10 @@ the same: `pnpm resume:preview` shows every unit before anything is stored.
 
 The brief asks for one. The real material produced six, all genuine — nothing here is synthetic.
 They live in `data/conflicts.json` as **data, not prompt text**, so they can be enumerated, asserted
-on in tests, and force-included at retrieval time. `lib/knowledge.ts` throws if a conflict
-references a unit id that no longer exists: a dangling reference would silently disable a
-disclosure, and that must break the build rather than degrade the answers.
+on in tests, and force-included at retrieval time. Ingest retires a conflict whose units are gone.
+Loading the knowledge base still throws if a conflict references a unit id that no longer exists:
+a dangling reference would silently disable a disclosure, and that must break the build rather than
+degrade the answers. Publishing a resume from `/admin` uses that same check and refuses the publish.
 
 | Conflict | What disagrees | What the system does |
 | --- | --- | --- |

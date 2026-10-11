@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { buildKnowledgeBase } from "../lib/knowledge";
+import { buildKnowledgeBase, retireDanglingConflicts } from "../lib/knowledge";
+import type { Conflict } from "../lib/models";
 import { jsonKnowledgeStore } from "../lib/db/knowledge-store";
 
 // The committed snapshot specifically: it is what the no-database demo serves and what ingest writes.
@@ -30,6 +31,45 @@ describe("knowledge base integrity", () => {
 
   it("covers all three sources", () => {
     expect(new Set(kb.units.map((u) => u.source))).toEqual(new Set(["cv", "linkedin", "github"]));
+  });
+});
+
+const conflict = (id: string, unitIds: string[]): Conflict => ({
+  id,
+  kind: "gap",
+  unitIds,
+  summary: `${id} summary`,
+  resolutionNote: `${id} note`,
+});
+
+describe("retiring conflicts whose units are gone", () => {
+  const units = [{ id: "cv:profile" }, { id: "linkedin:profile" }];
+
+  it("keeps every conflict whose units are all still present, in order", () => {
+    const conflicts = [
+      conflict("job-title", ["cv:profile", "linkedin:profile"]),
+      conflict("education", ["cv:profile"]),
+    ];
+    const result = retireDanglingConflicts(units, conflicts);
+    expect(result.retired).toEqual([]);
+    expect(result.kept).toEqual(conflicts);
+  });
+
+  it("drops a whole conflict when any of its units is missing", () => {
+    const surviving = conflict("job-title", ["cv:profile", "linkedin:profile"]);
+    const dangling = conflict("employment", ["cv:kpmg", "linkedin:current-employer"]);
+    const result = retireDanglingConflicts(units, [dangling, surviving]);
+    expect(result.kept).toEqual([surviving]);
+    expect(result.retired).toEqual([
+      { conflict: dangling, missingUnitIds: ["cv:kpmg", "linkedin:current-employer"] },
+    ]);
+  });
+
+  it("retires every conflict when none of their units remain", () => {
+    const conflicts = [conflict("education", ["linkedin:education"]), conflict("github", ["github:scope"])];
+    const result = retireDanglingConflicts(units, conflicts);
+    expect(result.kept).toEqual([]);
+    expect(result.retired.map((retired) => retired.conflict.id)).toEqual(["education", "github"]);
   });
 });
 
